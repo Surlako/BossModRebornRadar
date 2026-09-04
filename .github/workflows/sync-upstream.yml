@@ -1,0 +1,69 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Merge BossModReborn upstream
+        id: merge
+        shell: pwsh
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream https://github.com/FFXIV-CombatReborn/BossmodReborn.git
+          git fetch upstream main
+          $shortSha = (git rev-parse --short upstream/main).Trim()
+          $branch = "automation/upstream-$shortSha"
+          git switch -c $branch
+          git merge --no-edit upstream/main
+          "branch=$branch" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+          "short_sha=$shortSha" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+
+      - name: Verify radar-only boundary
+        shell: pwsh
+        run: ./scripts/Verify-RadarBoundary.ps1
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Download Dalamud latest
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
+          Expand-Archive -Force latest.zip -DestinationPath "$env:AppData\XIVLauncher\addon\Hooks\dev"
+
+      - name: Build merged plugin
+        run: |
+          dotnet restore BossMod/BossModReborn.csproj
+          dotnet build --no-restore -c Release BossMod/BossModReborn.csproj
+
+      - name: Push update branch
+        shell: pwsh
+        env:
+          BRANCH: ${{ steps.merge.outputs.branch }}
+        run: git push --set-upstream origin $env:BRANCH
+
+      - name: Open review pull request
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ steps.merge.outputs.branch }}
+          SHORT_SHA: ${{ steps.merge.outputs.short_sha }}
+        run: gh pr create --base main --head $env:BRANCH --title "Sync BossModReborn upstream $env:SHORT_SHA" --body "Automated upstream merge. Radar boundary verification and a release build passed. Review bootstrap, IPC, action, AI, autorotation, and movement-related changes before merging."

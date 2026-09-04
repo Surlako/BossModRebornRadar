@@ -25,7 +25,7 @@ sealed class WorldStateGameSync : IDisposable
     private const float Thousandth = 1e-3f;
 
     private readonly WorldState _ws;
-    private readonly ActionManagerEx _amex;
+    private readonly PassiveActionObserver _actionObserver;
     private readonly DateTime _startTime;
     private readonly long _startQPC;
 
@@ -93,10 +93,10 @@ sealed class WorldStateGameSync : IDisposable
 
     private readonly Hook<ActionManager.Delegates.GetActionInRangeOrLoS> _getActionInRangeOrLoSHook;
 
-    public unsafe WorldStateGameSync(WorldState ws, ActionManagerEx amex)
+    public unsafe WorldStateGameSync(WorldState ws, PassiveActionObserver actionObserver)
     {
         _ws = ws;
-        _amex = amex;
+        _actionObserver = actionObserver;
         _startTime = DateTime.Now;
         _startQPC = Framework.Instance()->PerformanceCounterValue;
         _interceptor.ServerIPCReceived += ServerIPCReceived;
@@ -109,8 +109,7 @@ sealed class WorldStateGameSync : IDisposable
         });
         _subscriptions = new
         (
-            amex.ActionRequestExecuted.Subscribe(OnActionRequested),
-            amex.ActionEffectReceived.Subscribe(OnActionEffect)
+            actionObserver.ActionEffectReceived.Subscribe(OnActionEffect)
         );
 
         _processPacketActorCastHook = Service.Hook.HookFromSignature<ProcessPacketActorCastDelegate>("40 53 57 48 81 EC ?? ?? ?? ?? 48 8B FA 8B D1", ProcessPacketActorCastDetour);
@@ -917,7 +916,7 @@ sealed class WorldStateGameSync : IDisposable
             _ws.Execute(new ClientState.OpFlyingChange(isFlying));
 
         Span<Cooldown> cooldowns = stackalloc Cooldown[_ws.Client.Cooldowns.Length];
-        _amex.GetCooldowns(cooldowns);
+        _actionObserver.GetCooldowns(cooldowns);
         if (!MemoryExtensions.SequenceEqual(_ws.Client.Cooldowns.AsSpan(), cooldowns))
         {
             if (cooldowns.IndexOfAnyExcept(default(Cooldown)) < 0)
@@ -930,7 +929,7 @@ sealed class WorldStateGameSync : IDisposable
             }
         }
 
-        var dutyActions = _amex.GetDutyActions();
+        var dutyActions = _actionObserver.GetDutyActions();
         if (!MemoryExtensions.SequenceEqual(_ws.Client.DutyActions.AsSpan(), dutyActions))
         {
             _ws.Execute(new ClientState.OpDutyActionsChange(dutyActions));
@@ -1252,8 +1251,6 @@ sealed class WorldStateGameSync : IDisposable
             _decoder.LogNode(new(sb.ToString()), "");
         }
     }
-
-    private void OnActionRequested(ClientActionRequest arg) => _globalOps.Add(new ClientState.OpActionRequest(arg));
 
     private void OnActionEffect(ulong casterID, ActorCastEvent info) => _actorOps.GetOrAdd(casterID).Add(new ActorState.OpCastEvent(casterID, info));
 

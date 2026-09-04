@@ -1,29 +1,41 @@
 name: Build
+
 on:
+  push:
+    branches:
+      - main
   pull_request:
     branches:
       - main
+  workflow_dispatch:
+
 jobs:
-  Build:
+  build:
+    name: Radar boundary and build
     runs-on: windows-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v6
         with:
           submodules: true
 
+      - name: Verify radar-only boundary
+        shell: pwsh
+        run: ./scripts/Verify-RadarBoundary.ps1
+
       - name: Set up .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: 10.0.x
 
-      - name: Download Dalamud Latest
+      - name: Download Dalamud latest
+        shell: pwsh
         run: |
           Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
           Expand-Archive -Force latest.zip -DestinationPath "$env:AppData\XIVLauncher\addon\Hooks\dev"
 
-      - name: Restore NuGet Packages
-        run: dotnet restore     BossMod/BossModReborn.csproj
+      - name: Restore packages
+        run: dotnet restore BossMod/BossModReborn.csproj
 
-      - name: Build Plugin
+      - name: Build plugin
         run: dotnet build --no-restore -c Release BossMod/BossModReborn.csproj

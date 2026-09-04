@@ -5,7 +5,7 @@ using System.IO;
 
 namespace BossMod;
 
-public sealed class AboutTab(DirectoryInfo? replayDir)
+public sealed class AboutTab(DirectoryInfo? replayDir, bool radarOnly = false)
 {
     private static readonly Color TitleColor = Color.FromComponents(255u, 165u, default);
     private static readonly Color SectionBgColor = Color.FromComponents(38u, 38u, 38u);
@@ -17,6 +17,12 @@ public sealed class AboutTab(DirectoryInfo? replayDir)
     public void Draw()
     {
         using var wrap = ImRaii.TextWrapPos(0);
+
+        if (radarOnly)
+        {
+            DrawRadarOnly();
+            return;
+        }
 
         ImGui.TextUnformatted("BossModReborn (BMR) provides boss fight radar, auto-rotation, cooldown planning, and AI. All of its modules can be toggled individually. Support for it can be found in the Discord server linked at the bottom of this tab.");
         ImGui.TextUnformatted("This is a FORK of the original BossMod (VBM). Only ask for support on the Combat Reborn Discord.");
@@ -89,6 +95,40 @@ public sealed class AboutTab(DirectoryInfo? replayDir)
         {
             _lastErrorMessage = OpenDirectory(replayDir);
         }
+
+        if (_lastErrorMessage.Length > 0)
+        {
+            using var color = ImRaii.PushColor(ImGuiCol.Text, Colors.TextColor3);
+            ImGui.TextUnformatted(_lastErrorMessage);
+        }
+    }
+
+    private void DrawRadarOnly()
+    {
+        ImGui.TextUnformatted("BossMod Reborn Radar is an unofficial, display-only companion build. It keeps BossModReborn encounter modules and radar/hints, but does not include autorotation, automovement, automatic actions, action tweaks, or BossMod IPC.");
+        ImGui.TextUnformatted("It is designed to run beside the original BossMod. Questionable should remain connected only to the original BossMod.");
+        ImGui.Spacing();
+        DrawSection("Safe coexistence",
+        [
+            "Uses the unique /bmrr command and BossModRebornRadar plugin identity.",
+            "Does not register any BossMod.* IPC endpoints.",
+            "Observes action effects for encounter timing but never changes or executes actions.",
+            "Disable the original BossMod radar if you only want this radar displayed.",
+        ]);
+        ImGui.Spacing();
+        DrawSection("Upstream",
+        [
+            "Encounter modules come from the community-maintained BossModReborn project.",
+            "This companion is not supported or endorsed by the BossModReborn or original BossMod maintainers.",
+        ]);
+        ImGui.Spacing();
+
+        if (ImGui.Button("Companion GitHub", new(220, 0)))
+            _lastErrorMessage = OpenLink("https://github.com/Surlako/BossModRebornRadar");
+
+        ImGui.SameLine();
+        if (ImGui.Button("BossModReborn upstream", new(220, 0)))
+            _lastErrorMessage = OpenLink("https://github.com/FFXIV-CombatReborn/BossmodReborn");
 
         if (_lastErrorMessage.Length > 0)
         {

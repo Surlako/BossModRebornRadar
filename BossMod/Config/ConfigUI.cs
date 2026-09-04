@@ -27,20 +27,23 @@ public sealed class ConfigUI : IDisposable
     private readonly ConfigRoot _root;
     private readonly WorldState _ws;
     private readonly UIPresetDatabaseEditor? _presets;
+    private readonly bool _radarOnly;
 
     private readonly List<List<string>> _filterNodes = [];
 
-    public ConfigUI(ConfigRoot config, WorldState ws, DirectoryInfo? replayDir, RotationDatabase? rotationDB)
+    public ConfigUI(ConfigRoot config, WorldState ws, DirectoryInfo? replayDir, RotationDatabase? rotationDB, bool radarOnly = false)
     {
         _root = config;
         _ws = ws;
-        _about = new(replayDir);
+        _radarOnly = radarOnly;
+        _about = new(replayDir, radarOnly);
         _mv = new(rotationDB?.Plans, ws);
         _presets = rotationDB != null ? new(rotationDB) : null;
 
         _tabs.Add("Settings", DrawSettings);
         _tabs.Add("Supported fights", () => _mv.Draw(_tree, _ws));
-        _tabs.Add("Autorotation presets", () => _presets?.Draw());
+        if (!radarOnly)
+            _tabs.Add("Autorotation presets", () => _presets?.Draw());
         _tabs.Add("Slash commands", DrawAvailableCommands);
         _tabs.Add("About", _about.Draw);
 
@@ -48,6 +51,8 @@ public sealed class ConfigUI : IDisposable
 
         foreach (var n in _root._nodes.Values)
         {
+            if (radarOnly && !IsRadarOnlyNode(n.GetType()))
+                continue;
             nodes[n.GetType()] = new(n);
         }
 
@@ -65,6 +70,22 @@ public sealed class ConfigUI : IDisposable
 
         SortByOrder(_roots);
         ResolvePaths(_roots, []);
+    }
+
+    private static bool IsRadarOnlyNode(Type type)
+    {
+        if (type == typeof(BossModuleConfig) || type == typeof(ColorConfig) || type == typeof(PartyRolesConfig))
+            return true;
+
+        // Preserve encounter-specific display settings, but hide known zone-automation pages.
+        if (type.Name is "AutoDDConfig" or "DuelFarmConfig" or "BozjaFarmConfig" or "ZadnorFarmConfig" or "EurekaConfig")
+            return false;
+
+        if (type == typeof(ModuleConfig))
+            return true;
+
+        var parent = GeneratedConfigMetadata.Get(type).Display?.Parent;
+        return parent != null && IsRadarOnlyNode(parent);
     }
 
     private void ResolvePaths(List<UINode> nodes, List<string> parent)
@@ -164,10 +185,27 @@ public sealed class ConfigUI : IDisposable
         ( "cfg", "Lists all configs." )
     ];
 
-    private static void DrawAvailableCommands()
+    private static readonly (string, string)[] _radarCommands =
+    [
+        ( "", "Open radar settings." ),
+        ( "radar", "Toggle the radar." ),
+        ( "radar on/off", "Enable or disable the radar." ),
+        ( "radar reset", "Recenter the radar window." ),
+        ( "resetcolors", "Reset radar colors." ),
+        ( "gc", "Run garbage collection." )
+    ];
+
+    private void DrawAvailableCommands()
     {
         ImGui.Text("Available Commands:");
         ImGui.Separator();
+        if (_radarOnly)
+        {
+            foreach (var text in _radarCommands)
+                ImGui.Text($"/bmrr {text.Item1}: {text.Item2}");
+            return;
+        }
+
         ImGui.Text("AI:");
         ImGui.Separator();
         for (var i = 0; i < 30; ++i)
@@ -309,7 +347,9 @@ public sealed class ConfigUI : IDisposable
 
         foreach (var n in _tree.Nodes(filteredNodes, n => new(n.Name)))
         {
-            DrawNode(n.Node, _root, _tree, _ws, props => MatchesFilter([.. n.Path, props.Label]));
+            DrawNode(n.Node, _root, _tree, _ws, props =>
+                (!_radarOnly || props.Label != "Allow modules to automatically use actions")
+                && MatchesFilter([.. n.Path, props.Label]));
             DrawNodes(n.Children);
         }
     }

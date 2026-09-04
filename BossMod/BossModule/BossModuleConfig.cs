@@ -19,8 +19,8 @@ public sealed class BossModuleConfig : ConfigNode
     [PropertyDisplay("Minimal maturity for the module to be loaded", tooltip: "Some modules will have the \"WIP\" status and will not automatically load unless you change this")]
     public BossModuleInfo.Maturity MinMaturity = BossModuleInfo.Maturity.Contributed;
 
-    [PropertyDisplay("Allow modules to automatically use actions", tooltip: "Example: modules can automatically use anti-knockback abilities before a knockback happens")]
-    public bool AllowAutomaticActions = true;
+    [PropertyDisplay("Allow modules to automatically use actions", tooltip: "Unavailable in the radar-only build")]
+    public bool AllowAutomaticActions = false;
 
     [PropertyDisplay("Show testing radar and hint window", tooltip: "Useful for configuring your radar and hint windows without being inside of a boss encounter", separator: true)]
     public bool ShowDemo = false;

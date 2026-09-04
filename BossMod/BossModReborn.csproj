@@ -3,13 +3,13 @@
     <Authors></Authors>
     <Company></Company>
     <Version>0.0.0.0</Version>
-    <Description>Boss mod.</Description>
+    <Description>Radar-only BossModReborn companion for use beside the original BossMod.</Description>
     <Copyright></Copyright>
     <PackageProjectUrl></PackageProjectUrl>
   </PropertyGroup>
 
 <PropertyGroup>
-  <AssemblyName>BossModReborn</AssemblyName>
+  <AssemblyName>BossModRebornRadar</AssemblyName>
 </PropertyGroup>
 
   <PropertyGroup>
@@ -130,7 +130,7 @@
 
   <Target Name="CleanupOutput" AfterTargets="Build" BeforeTargets="DalamudPackage">
     <ItemGroup>
-      <_ExtraOutputFiles Include="$(OutputPath)*" Exclude="$(OutputPath)BossModReborn.*;$(OutputPath)DefaultRotationPresets.json;$(OutputPath)RebornPresets.json;$(OutputPath)PInvoke.User32.dll" />
+      <_ExtraOutputFiles Include="$(OutputPath)*" Exclude="$(OutputPath)$(AssemblyName).*;$(OutputPath)DefaultRotationPresets.json;$(OutputPath)RebornPresets.json;$(OutputPath)PInvoke.User32.dll" />
     </ItemGroup>
     <Delete Files="@(_ExtraOutputFiles)" />
   </Target>
