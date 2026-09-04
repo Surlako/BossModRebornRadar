@@ -1,32 +1,30 @@
-[
-  {
-    "Author": "Surlako; based on BossModReborn",
-    "Name": "BossMod Reborn Radar",
-    "InternalName": "BossModRebornRadar",
-    "RepoUrl": "https://github.com/Surlako/BossModRebornRadar",
-    "Description": "An unofficial radar-only BossModReborn companion. No IPC, autorotation, automovement, action tweaks, or automatic actions.",
-    "ApplicableVersion": "any",
-    "Tags": [
-      "boss",
-      "radar",
-      "mechanics",
-      "pve",
-      "raids",
-      "trials"
-    ],
-    "DalamudApiLevel": 15,
-    "TestingDalamudApiLevel": 15,
-    "LoadRequiredState": 0,
-    "LoadSync": false,
-    "CanUnloadAsync": false,
-    "LoadPriority": 0,
-    "IsTestingExclusive": false,
-    "Punchline": "BossModReborn encounter coverage, radar only",
-    "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.5.70/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.5.70/latest.zip",
-    "DownloadLinkTesting": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.5.70/latest.zip",
-    "AssemblyVersion": "7.5.5.70",
-    "Changelog": "Initial radar-only companion release based on BossModReborn 7.5.5.70."
-  }
-]
+{
+  "Author": "Surlako; based on BossModReborn",
+  "Name": "BossMod Reborn Radar",
+  "InternalName": "BossModRebornRadar",
+  "RepoUrl": "https://github.com/Surlako/BossModRebornRadar",
+  "Description": "An unofficial radar-only BossModReborn companion. No IPC, autorotation, automovement, action tweaks, or automatic actions.",
+  "ApplicableVersion": "any",
+  "Tags": [
+    "boss",
+    "radar",
+    "mechanics",
+    "pve",
+    "raids",
+    "trials"
+  ],
+  "DalamudApiLevel": 15,
+  "TestingDalamudApiLevel": 15,
+  "LoadRequiredState": 0,
+  "LoadSync": false,
+  "CanUnloadAsync": false,
+  "LoadPriority": 0,
+  "IsTestingExclusive": false,
+  "Punchline": "BossModReborn encounter coverage, radar only",
+  "AcceptsFeedback": true,
+  "DownloadLinkInstall": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.5.70/latest.zip",
+  "DownloadLinkUpdate": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.5.70/latest.zip",
+  "DownloadLinkTesting": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.5.70/latest.zip",
+  "AssemblyVersion": "7.5.5.70",
+  "Changelog": "Radar-only companion release 7.5.5.70, synchronized with current BossModReborn encounter modules."
+}
