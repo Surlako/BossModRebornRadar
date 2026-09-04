@@ -21,7 +21,7 @@ The plugin has its own internal identity (`BossModRebornRadar`), window namespac
 
 1. Open Dalamud Settings, select **Experimental**, and add this custom repository URL:
 
-   `https://raw.githubusercontent.com/Surlako/BossModRebornRadar/main/pluginmaster.json`
+   `https://surlako.github.io/BossModRebornRadar/pluginmaster.json`
 
 2. Install **BossMod Reborn Radar** from the plugin installer.
 3. Keep the original **BossMod** installed and enabled for Questionable.

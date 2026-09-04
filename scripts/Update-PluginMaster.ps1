@@ -19,4 +19,4 @@ $plugin.DownloadLinkUpdate = $download
 $plugin.DownloadLinkTesting = $download
 $plugin.Changelog = "Radar-only companion release $Version, synchronized with current BossModReborn encounter modules."
 
-$catalog | ConvertTo-Json -Depth 10 | Set-Content $catalogPath -Encoding utf8NoBOM
+ConvertTo-Json -InputObject $catalog -Depth 10 | Set-Content $catalogPath -Encoding utf8NoBOM
