@@ -49,7 +49,7 @@ jobs:
 
       - name: Clean package contents
         shell: pwsh
-        run: Get-ChildItem ./build/* -Exclude BossModRebornRadar.*,DefaultRotationPresets.json,RebornPresets.json,PInvoke.User32.dll | Remove-Item -Force -Recurse
+        run: Get-ChildItem ./build/* -Exclude BossModRebornRadar.*,DefaultRotationPresets.json,RebornPresets.json | Remove-Item -Force -Recurse
 
       - name: Zip plugin
         shell: pwsh
