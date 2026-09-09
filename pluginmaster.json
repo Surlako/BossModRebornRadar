@@ -23,10 +23,10 @@
     "IsTestingExclusive": false,
     "Punchline": "BossModReborn encounter coverage, radar only",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.5.70/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.5.70/latest.zip",
-    "DownloadLinkTesting": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.5.70/latest.zip",
-    "AssemblyVersion": "7.5.5.70",
-    "Changelog": "Radar-only companion release 7.5.5.70, synchronized with current BossModReborn encounter modules."
+    "DownloadLinkInstall": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.6.1/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.6.1/latest.zip",
+    "DownloadLinkTesting": "https://github.com/Surlako/BossModRebornRadar/releases/download/7.5.6.1/latest.zip",
+    "AssemblyVersion": "7.5.6.1",
+    "Changelog": "Radar-only companion release 7.5.6.1, synchronized with current BossModReborn encounter modules."
   }
 ]
