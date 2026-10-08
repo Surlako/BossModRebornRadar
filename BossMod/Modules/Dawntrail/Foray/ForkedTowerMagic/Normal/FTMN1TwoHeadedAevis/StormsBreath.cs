@@ -1,6 +1,5 @@
 ﻿namespace BossMod.Dawntrail.Foray.ForkedTowerMagic.Extreme.FTME1TwoHeadedAevis;
 
-[SkipLocalsInit]
 sealed class StormsBreath(BossModule module) : Components.SimpleKnockbacks(module, (uint)AID.StormsBreathCast, 14f)
 {
     // TODO: verify with which mechanics can happen at same time in EX, can happen with at least Freezing Fugue
@@ -26,7 +25,7 @@ sealed class StormsBreath(BossModule module) : Components.SimpleKnockbacks(modul
                 {
                     var count = aoes.Length;
                     var pos = new WPos[count];
-                    for (var i = 0; i < count; i++)
+                    for (var i = 0; i < count; ++i)
                     {
                         pos[i] = aoes[i].Origin;
                     }

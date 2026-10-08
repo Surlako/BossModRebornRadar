@@ -1,7 +1,6 @@
 ﻿namespace BossMod.Components;
 
 // generic component that shows arbitrary shapes representing avoidable aoes
-[SkipLocalsInit]
 public abstract class GenericAOEs(BossModule module, uint aid = default, string warningText = "GTFO from aoe!") : CastCounter(module, aid)
 {
     public struct AOEInstance(AOEShape shape, WPos origin, Angle rotation = default, DateTime activation = default, uint color = default, bool risky = true, ulong actorID = default, ShapeDistance? shapeDistance = null, int? arenaProjectionLayer = null, bool? restrictToArenaProjectionLayer = false)
@@ -79,7 +78,7 @@ public abstract class GenericAOEs(BossModule module, uint aid = default, string 
         var bestIndex = 0;
         var bestDiff = Math.Abs(values[0] - y);
         var len = values.Length;
-        for (var i = 1; i < len; i++)
+        for (var i = 1; i < len; ++i)
         {
             var diff = Math.Abs(values[i] - y);
 

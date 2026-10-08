@@ -1,6 +1,5 @@
 namespace BossMod;
 
-[SkipLocalsInit]
 public sealed class SDKnockbackInAABBRectFixedDirection(WPos Center, WDir Direction, float HalfWidth, float HalfHeight) : ShapeDistance
 {
     private readonly WPos center = Center;
@@ -17,7 +16,6 @@ public sealed class SDKnockbackInAABBRectFixedDirection(WPos Center, WDir Direct
     public override bool RowIntersectsShape(WPos rowStart, WDir dx, float width, float cushion = default) => true;
 }
 
-[SkipLocalsInit]
 public sealed class SDKnockbackInAABBRectAwayFromOrigin(WPos Center, WPos Origin, float Distance, float HalfWidth, float HalfHeight) : ShapeDistance
 {
     private readonly WPos center = Center;
@@ -35,7 +33,6 @@ public sealed class SDKnockbackInAABBRectAwayFromOrigin(WPos Center, WPos Origin
     public override bool RowIntersectsShape(WPos rowStart, WDir dx, float width, float cushion = default) => true;
 }
 
-[SkipLocalsInit]
 public sealed class SDKnockbackInAABBRectLeftRightAlongZAxis(WPos Center, float Distance, float HalfWidth, float HalfHeight) : ShapeDistance
 {
     private readonly WPos center = Center;
@@ -62,7 +59,6 @@ public sealed class SDKnockbackInAABBRectLeftRightAlongZAxis(WPos Center, float 
     public override bool RowIntersectsShape(WPos rowStart, WDir dx, float width, float cushion = default) => true;
 }
 
-[SkipLocalsInit]
 public sealed class SDKnockbackInAABBRectLeftRightAlongXAxis(WPos Center, float Distance, float HalfWidth, float HalfHeight) : ShapeDistance
 {
     private readonly WPos center = Center;
@@ -89,7 +85,6 @@ public sealed class SDKnockbackInAABBRectLeftRightAlongXAxis(WPos Center, float 
     public override bool RowIntersectsShape(WPos rowStart, WDir dx, float width, float cushion = default) => true;
 }
 
-[SkipLocalsInit]
 public sealed class SDKnockbackInAABBRectLeftRightAlongZAxisPlusAOERects(WPos Center, float Distance, float HalfWidth, float HalfHeight, (WPos Origin, WDir Direction)[] AOEs, float LengthFront, float RectHalfWidth, int Length) : ShapeDistance
 {
     private readonly WPos center = Center;
@@ -132,7 +127,6 @@ public sealed class SDKnockbackInAABBRectLeftRightAlongZAxisPlusAOERects(WPos Ce
     public override bool RowIntersectsShape(WPos rowStart, WDir dx, float width, float cushion = default) => true;
 }
 
-[SkipLocalsInit]
 public sealed class SDKnockbackInAABBRectFixedDirectionPlusAOECircle(WPos Center, WDir Direction, float HalfWidth, float HalfHeight, WPos CircleOrigin, float Radius) : ShapeDistance
 {
     private readonly WPos center = Center;
@@ -156,7 +150,6 @@ public sealed class SDKnockbackInAABBRectFixedDirectionPlusAOECircle(WPos Center
     public override bool RowIntersectsShape(WPos rowStart, WDir dx, float width, float cushion = default) => true;
 }
 
-[SkipLocalsInit]
 public sealed class SDKnockbackInAABBRectFixedDirectionPlusAOECircles(WPos Center, WDir Direction, float HalfWidth, float HalfHeight, WPos[] Origins, float Radius, int Length) : ShapeDistance
 {
     private readonly WPos center = Center;
@@ -183,6 +176,74 @@ public sealed class SDKnockbackInAABBRectFixedDirectionPlusAOECircles(WPos Cente
                 return true;
             }
         }
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override float Distance(in WPos p) => Contains(p) ? 0f : 1f;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override bool RowIntersectsShape(WPos rowStart, WDir dx, float width, float cushion = default) => true;
+}
+
+public sealed class SDKnockbackInAABBRectAwayFromOriginPlusAOERects(WPos Center, WPos Origin, float Distance, float HalfWidth, float HalfHeight, (WPos Origin, WDir Direction)[] AOEs, float LengthFront, float RectHalfWidth, int Length) : ShapeDistance {
+    private readonly WPos center = Center;
+    private readonly WPos origin = Origin;
+    private readonly float halfWidth = HalfWidth;
+    private readonly float halfHeight = HalfHeight;
+    private readonly float distance = Distance;
+    private readonly (WPos origin, WDir direction)[] aoes = AOEs;
+    private readonly float lenFront = LengthFront;
+    private readonly float rectHalfWidth = RectHalfWidth;
+    private readonly int len = Length;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override bool Contains(in WPos p) {
+        var projected = p + distance * (p - origin).Normalized();
+        if (!projected.InRect(center, halfWidth, halfHeight)) {
+            return true;
+        }
+
+        for (var i = 0; i < len; ++i) {
+            ref var aoe = ref aoes[i];
+            if (projected.InRect(aoe.origin, aoe.direction, lenFront, default, rectHalfWidth)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override float Distance(in WPos p) => Contains(p) ? 0f : 1f;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override bool RowIntersectsShape(WPos rowStart, WDir dx, float width, float cushion = default) => true;
+}
+
+public sealed class SDKnockbackInAABBRectAwayFromOriginPlusIntersectAOECircles(WPos Center, WPos Origin, float Distance, float HalfWidth, float HalfHeight, WPos[] Origins, float Radius, int Length) : ShapeDistance {
+    private readonly WPos center = Center;
+    private readonly WPos origin = Origin;
+    private readonly float halfWidth = HalfWidth;
+    private readonly float halfHeight = HalfHeight;
+    private readonly float distance = Distance;
+    private readonly WPos[] origins = Origins;
+    private readonly float radius = Radius;
+    private readonly int len = Length;
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public override bool Contains(in WPos p) {
+        var projected = p + distance * (p - origin).Normalized();
+        if (!projected.InRect(center, halfWidth, halfHeight)) {
+            return true;
+        }
+
+        for (var i = 0; i < len; ++i) {
+            ref var circle = ref origins[i];
+            if (Intersect.RayCircle(p - circle, (p - origin).Normalized(), radius, distance)) {
+                return true;
+            }
+        }
+
         return false;
     }
 

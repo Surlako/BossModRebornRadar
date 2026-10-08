@@ -59,10 +59,12 @@ public abstract class GenericStackSpread(BossModule module, bool raidwideOnResol
 
     public readonly bool RaidwideOnResolve = raidwideOnResolve; // if true, assume even if mechanic is correctly resolved everyone will still take damage
     public readonly bool IncludeDeadTargets = includeDeadTargets; // if false, stacks & spreads with dead targets are ignored
-    public int ExtraAISpreadThreshold = 1;
+    public float ExtraAISpreadThreshold = 1f;
     public readonly List<Stack> Stacks = [];
     public List<Spread> Spreads = [];
     public const string StackHint = "Stack!";
+
+    public bool EnableHints = true;
 
     public bool Active => Stacks.Count + Spreads.Count > 0;
     public List<Stack> ActiveStacks
@@ -191,6 +193,11 @@ public abstract class GenericStackSpread(BossModule module, bool raidwideOnResol
 
     public override void AddHints(int slot, Actor actor, TextHints hints)
     {
+        if (!EnableHints)
+        {
+            return;
+        }
+
         var spreads = CollectionsMarshal.AsSpan(ActiveSpreads);
         var lenSpreads = spreads.Length;
         for (var i = 0; i < lenSpreads; ++i)
@@ -354,6 +361,11 @@ public abstract class GenericStackSpread(BossModule module, bool raidwideOnResol
 
     public override void AddAIHints(int slot, Actor actor, PartyRolesConfig.Assignment assignment, AIHints hints)
     {
+        if (!EnableHints)
+        {
+            return;
+        }
+
         // forbid standing next to spread markers
         // TODO: think how to improve this, current implementation works, but isn't particularly good - e.g. nearby players tend to move to same spot, turn around, etc.
         // ideally we should provide per-mechanic spread spots, but for simple cases we should try to let melee spread close and healers/rdd spread far from main target...
@@ -669,7 +681,6 @@ public abstract class GenericStackSpread(BossModule module, bool raidwideOnResol
 }
 
 // stack/spread with same properties for all stacks and all spreads (most common variant)
-[SkipLocalsInit]
 public abstract class UniformStackSpread(BossModule module, float stackRadius, float spreadRadius, int minStackSize = 2, int maxStackSize = int.MaxValue, bool raidwideOnResolve = true, bool includeDeadTargets = false)
     : GenericStackSpread(module, raidwideOnResolve, includeDeadTargets)
 {
@@ -686,7 +697,24 @@ public abstract class UniformStackSpread(BossModule module, float stackRadius, f
             Stacks.Add(new(target, StackRadius, MinStackSize, MaxStackSize, activation, arenaProjectionLayer: arenaProjectionLayer, restrictToArenaProjectionLayer: restrictToArenaProjectionLayer));
         }
     }
+    public void AddStacks(Actor[] targets, DateTime activation = default, int? arenaProjectionLayer = null, bool? restrictToArenaProjectionLayer = true)
+    {
+        var len = targets.Length;
+        for (var i = 0; i < len; ++i)
+        {
+            Stacks.Add(new(targets[i], StackRadius, MinStackSize, MaxStackSize, activation, arenaProjectionLayer: arenaProjectionLayer, restrictToArenaProjectionLayer: restrictToArenaProjectionLayer));
+        }
+    }
+    public void AddStacks(List<Actor> targets, DateTime activation = default, int? arenaProjectionLayer = null, bool? restrictToArenaProjectionLayer = true)
+    {
+        var count = targets.Count;
+        for (var i = 0; i < count; ++i)
+        {
+            Stacks.Add(new(targets[i], StackRadius, MinStackSize, MaxStackSize, activation, arenaProjectionLayer: arenaProjectionLayer, restrictToArenaProjectionLayer: restrictToArenaProjectionLayer));
+        }
+    }
     public void AddSpread(Actor target, DateTime activation = default, int? arenaProjectionLayer = null, bool? restrictToArenaProjectionLayer = true) => Spreads.Add(new(target, SpreadRadius, activation, arenaProjectionLayer, restrictToArenaProjectionLayer));
+
     public void AddSpreads(IEnumerable<Actor> targets, DateTime activation = default, int? arenaProjectionLayer = null, bool? restrictToArenaProjectionLayer = true)
     {
         foreach (var target in targets)
@@ -694,12 +722,29 @@ public abstract class UniformStackSpread(BossModule module, float stackRadius, f
             Spreads.Add(new(target, SpreadRadius, activation, arenaProjectionLayer, restrictToArenaProjectionLayer));
         }
     }
+
+    public void AddSpreads(Actor[] targets, DateTime activation = default, int? arenaProjectionLayer = null, bool? restrictToArenaProjectionLayer = true)
+    {
+        var len = targets.Length;
+        for (var i = 0; i < len; ++i)
+        {
+            Spreads.Add(new(targets[i], SpreadRadius, activation, arenaProjectionLayer, restrictToArenaProjectionLayer));
+        }
+    }
+
+    public void AddSpreads(List<Actor> targets, DateTime activation = default, int? arenaProjectionLayer = null, bool? restrictToArenaProjectionLayer = true)
+    {
+        var count = targets.Count;
+        for (var i = 0; i < count; ++i)
+        {
+            Spreads.Add(new(targets[i], SpreadRadius, activation, arenaProjectionLayer, restrictToArenaProjectionLayer));
+        }
+    }
 }
 
 // spread/stack mechanic that selects targets by casts
-[SkipLocalsInit]
-public class CastStackSpread(BossModule module, uint stackAID, uint spreadAID, float stackRadius, float spreadRadius, int minStackSize = 2, int maxStackSize = int.MaxValue, bool alwaysShowSpreads = false, int? arenaProjectionLayer = null, bool? restrictToArenaProjectionLayer = true)
-    : UniformStackSpread(module, stackRadius, spreadRadius, minStackSize, maxStackSize, alwaysShowSpreads)
+public class CastStackSpread(BossModule module, uint stackAID, uint spreadAID, float stackRadius, float spreadRadius, int minStackSize = 2, int maxStackSize = int.MaxValue, int? arenaProjectionLayer = null, bool? restrictToArenaProjectionLayer = true)
+    : UniformStackSpread(module, stackRadius, spreadRadius, minStackSize, maxStackSize)
 {
     public int? ArenaProjectionLayer = arenaProjectionLayer;
     public bool? RestrictToArenaProjectionLayer = restrictToArenaProjectionLayer;

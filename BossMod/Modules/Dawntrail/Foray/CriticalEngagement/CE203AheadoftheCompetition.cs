@@ -119,7 +119,7 @@ sealed class Shock(BossModule module) : Components.GenericAOEs(module)
         var max = count > 2 ? 2 : count;
         var aoes = CollectionsMarshal.AsSpan(Casters);
 
-        for (var i = 0; i < max; i++)
+        for (var i = 0; i < max; ++i)
         {
             ref var aoe = ref aoes[i];
             aoe.Color = i == 0 ? Colors.Danger : Colors.AOE;
@@ -165,7 +165,7 @@ sealed class ManyHeadedBreath(BossModule module) : Components.GenericAOEs(module
         var max = count > 2 ? 2 : count;
         var nextAOEs = CollectionsMarshal.AsSpan(aoes);
 
-        for (var i = 0; i < max; i++)
+        for (var i = 0; i < max; ++i)
         {
             ref var aoe = ref nextAOEs[i];
             aoe.Color = i == 0 ? Colors.Danger : Colors.AOE;
@@ -209,7 +209,6 @@ sealed class Dissipate(BossModule module) : Components.Voidzone(module, 8.5f, mo
     }
 }
 
-[SkipLocalsInit]
 sealed class CE203AheadoftheCompetitionStates : StateMachineBuilder
 {
     public CE203AheadoftheCompetitionStates(BossModule module) : base(module)
@@ -228,7 +227,6 @@ sealed class CE203AheadoftheCompetitionStates : StateMachineBuilder
 }
 
 [ModuleInfo(BossModuleInfo.Maturity.Verified, PrimaryActorOID = (uint)OID.PhantomHydra, Contributors = "Equilius", GroupType = BossModuleInfo.GroupType.CriticalEngagement, GroupID = 1093u, NameID = 62u)]
-[SkipLocalsInit]
 public sealed class CE203AheadoftheCompetition : BossModule
 {
     public CE203AheadoftheCompetition(WorldState ws, Actor primary) : this(ws, primary, BuildArena()) { }

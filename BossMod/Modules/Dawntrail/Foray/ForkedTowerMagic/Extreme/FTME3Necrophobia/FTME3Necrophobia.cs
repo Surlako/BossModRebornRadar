@@ -1,23 +1,14 @@
 ﻿namespace BossMod.Dawntrail.Foray.ForkedTowerMagic.Extreme.FTME3Necrophobia;
 
-[SkipLocalsInit]
 // does it always have 2 instances of each damage eventcast? or is it only when there are 24+ players in tower?
 sealed class HailOfHellflares(BossModule module) : Components.RaidwideCast(module, (uint)AID.HailOfHellflares, "Raidwide x5");
-[SkipLocalsInit]
 sealed class FireIII(BossModule module) : Components.SimpleAOEGroups(module, [(uint)AID.AncientFire1, (uint)AID.AncientFire2, (uint)AID.SeveredFire], 18f);
-[SkipLocalsInit]
 sealed class BlizzardIII(BossModule module) : Components.SimpleAOEGroups(module, [(uint)AID.AncientBlizzard1, (uint)AID.AncientBlizzard2, (uint)AID.SeveredBlizzard], new AOEShapeCross(45f, 7.5f));
-[SkipLocalsInit]
 sealed class ThunderIII(BossModule module) : Components.SimpleAOEGroups(module, [(uint)AID.AncientThunder1, (uint)AID.AncientThunder2, (uint)AID.SeveredThunder], new AOEShapeCone(60f, 22.5f.Degrees()));
-[SkipLocalsInit]
 sealed class DeathlyRay(BossModule module) : Components.SimpleAOEs(module, (uint)AID.DeathlyRay, new AOEShapeRect(30f, 3f));
-[SkipLocalsInit]
 sealed class VacuumWave(BossModule module) : Components.SimpleAOEs(module, (uint)AID.VacuumWave, new AOEShapeCone(30f, 90f.Degrees()));
-[SkipLocalsInit]
 sealed class CorpseMangler(BossModule module) : Components.SingleTargetCast(module, (uint)AID.CorpseMangler);
-[SkipLocalsInit]
 sealed class FertileGroundRaidwide(BossModule module) : Components.CastCounter(module, (uint)AID.FertileGround);
-[SkipLocalsInit]
 sealed class SpellProcession(BossModule module) : BossComponent(module)
 {
     public override void AddAIHints(int slot, Actor actor, PartyRolesConfig.Assignment assignment, AIHints hints)
@@ -26,7 +17,6 @@ sealed class SpellProcession(BossModule module) : BossComponent(module)
         hints.GoalZones.Add(AIHints.GoalSingleTarget(Arena.Center, 5f));
     }
 }
-[SkipLocalsInit]
 sealed class DeathShroud(BossModule module) : Components.GenericAOEs(module)
 {
     private readonly List<AOEInstance> _aoes = [];
@@ -88,7 +78,6 @@ sealed class DeathShroud(BossModule module) : Components.GenericAOEs(module)
         }
     }
 }
-[SkipLocalsInit]
 sealed class DarkCurrent(BossModule module) : Components.GenericAOEs(module)
 {
     private readonly List<AOEInstance> _aoes = [];
@@ -132,7 +121,7 @@ sealed class DarkCurrent(BossModule module) : Components.GenericAOEs(module)
             var distance = 10f;
             _aoes.Add(new(_rect, position, rotation, act, risky: true));
 
-            for (var i = 1; i <= 2; i++)
+            for (var i = 1; i <= 2; ++i)
             {
                 _aoes.Add(new(_rect, position + i * distance * dir, rotation, act.AddSeconds(2.1d * i), risky: false));
                 _aoes.Add(new(_rect, position + i * distance * dir * -1f, rotation, act.AddSeconds(2.1d * i), risky: false));
@@ -166,11 +155,5 @@ sealed class DarkCurrent(BossModule module) : Components.GenericAOEs(module)
     }
 }
 
-[ModuleInfo(BossModuleInfo.Maturity.WIP, PrimaryActorOID = (uint)OID.Necrophobia, Contributors = "gynorhino",
-    Category = BossModuleInfo.Category.Foray, GroupType = BossModuleInfo.GroupType.TheForkedTowerMagicExtreme,
-    GroupID = 1114u, NameID = 14503u, SortOrder = 3, PlanLevel = 100)]
-[SkipLocalsInit]
-public sealed class FTME3Necrophobia(WorldState ws, Actor primary) : BossModule(ws, primary, new(100f, 800f), new ArenaBoundsCircle(24f))
-{
-    protected override bool CheckPull() => base.CheckPull() && Raid.Player()!.Position.InCircle(Arena.Center, 24f);
-}
+[ModuleInfo(BossModuleInfo.Maturity.Contributed, PrimaryActorOID = (uint)OID.Necrophobia, Contributors = "gynorhino", GroupType = BossModuleInfo.GroupType.TheForkedTowerMagicExtreme, GroupID = 1114u, NameID = 14503u, SortOrder = 3, PlanLevel = 100)]
+public sealed class FTME3Necrophobia(WorldState ws, Actor primary) : BossModule(ws, primary, new(100f, 800f), new ArenaBoundsCircle(24f));

@@ -9,6 +9,10 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
 jobs:
   sync:
     runs-on: windows-latest
@@ -27,40 +31,58 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git remote add upstream https://github.com/FFXIV-CombatReborn/BossmodReborn.git
           git fetch upstream main
+          if ($LASTEXITCODE -ne 0) { throw "Could not fetch upstream." }
+          git merge-base --is-ancestor upstream/main HEAD
+          if ($LASTEXITCODE -eq 0) {
+            Write-Host "Upstream is already merged."
+            "changed=false" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
+            exit 0
+          }
+          if ($LASTEXITCODE -ne 1) { throw "Could not compare upstream history." }
           $shortSha = (git rev-parse --short upstream/main).Trim()
           $branch = "automation/upstream-$shortSha"
           git switch -c $branch
+          if ($LASTEXITCODE -ne 0) { throw "Could not create update branch." }
           git merge --no-edit upstream/main
+          if ($LASTEXITCODE -ne 0) { throw "Upstream merge needs manual conflict resolution; no branch was published." }
+          "changed=true" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
           "branch=$branch" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
           "short_sha=$shortSha" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
       - name: Verify radar-only boundary
+        if: steps.merge.outputs.changed == 'true'
         shell: pwsh
         run: ./scripts/Verify-RadarBoundary.ps1
 
       - name: Set up .NET
+        if: steps.merge.outputs.changed == 'true'
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
 
       - name: Download Dalamud latest
+        if: steps.merge.outputs.changed == 'true'
         shell: pwsh
         run: |
           Invoke-WebRequest -Uri https://goatcorp.github.io/dalamud-distrib/latest.zip -OutFile latest.zip
           Expand-Archive -Force latest.zip -DestinationPath "$env:AppData\XIVLauncher\addon\Hooks\dev"
 
       - name: Build merged plugin
+        if: steps.merge.outputs.changed == 'true'
         run: |
           dotnet restore BossMod/BossModReborn.csproj
+          if ($LASTEXITCODE -ne 0) { throw "Package restore failed." }
           dotnet build --no-restore -c Release BossMod/BossModReborn.csproj
 
       - name: Push update branch
+        if: steps.merge.outputs.changed == 'true'
         shell: pwsh
         env:
           BRANCH: ${{ steps.merge.outputs.branch }}
         run: git push --set-upstream origin $env:BRANCH
 
       - name: Open review pull request
+        if: steps.merge.outputs.changed == 'true'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}

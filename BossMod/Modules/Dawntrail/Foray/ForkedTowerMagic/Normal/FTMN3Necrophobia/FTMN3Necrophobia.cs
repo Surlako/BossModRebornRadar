@@ -48,7 +48,7 @@ sealed class DarkCurrent(BossModule module) : Components.GenericAOEs(module)
             var distance = 10f;
             _aoes.Add(new(_rect, position, rotation, act, risky: true));
 
-            for (var i = 1; i <= 2; i++)
+            for (var i = 1; i <= 2; ++i)
             {
                 _aoes.Add(new(_rect, position + i * distance * dir, rotation, act.AddSeconds(2.1d * i), risky: false));
                 _aoes.Add(new(_rect, position + i * distance * dir * -1f, rotation, act.AddSeconds(2.1d * i), risky: false));
@@ -85,7 +85,6 @@ sealed class DeathlyRay(BossModule module) : Components.SimpleAOEs(module, (uint
 sealed class VacuumWave(BossModule module) : Components.SimpleAOEs(module, (uint)AID.VacuumWave, new AOEShapeCone(30f, 90f.Degrees()));
 
 [ModuleInfo(BossModuleInfo.Maturity.Verified, PrimaryActorOID = (uint)OID.Necrophobia, Contributors = "gynorhino", GroupType = BossModuleInfo.GroupType.TheForkedTowerMagicNormal, GroupID = 1093u, NameID = 14503u)]
-[SkipLocalsInit]
 public sealed class FTMN3Necrophobia(WorldState ws, Actor primary) : BossModule(ws, primary, new WPos(100f, 800f).Quantized(), new ArenaBoundsCircle(24f))
 {
     protected override bool CheckPull() => base.CheckPull() && Raid.Player()!.Position.InCircle(Arena.Center, 24f);

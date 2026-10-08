@@ -184,7 +184,7 @@ sealed class Steelsbreath(BossModule module) : Components.GenericKnockback(modul
         if (pcount != 0)
         {
             var pkbs = CollectionsMarshal.AsSpan(pendingkbs);
-            for (var i = 0; i < pcount; i++)
+            for (var i = 0; i < pcount; ++i)
             {
                 ref var pkb = ref pkbs[i];
                 var timeleft = (pkb.Expiration - WorldState.CurrentTime).TotalSeconds;
@@ -226,7 +226,6 @@ sealed class Steelsbreath(BossModule module) : Components.GenericKnockback(modul
 }
 
 [ModuleInfo(BossModuleInfo.Maturity.Contributed, PrimaryActorOID = (uint)OID.SwordDancer, Contributors = "gynorhino", GroupType = BossModuleInfo.GroupType.TheForkedTowerMagicNormal, GroupID = 1093u, NameID = 14820u)]
-[SkipLocalsInit]
 public sealed class FTMN2SwordDancer(WorldState ws, Actor primary) : BossModule(ws, primary, new WPos(600f, 704f).Quantized(), new ArenaBoundsCircle(24f))
 {
     protected override bool CheckPull() => base.CheckPull() && Raid.Player()!.Position.InCircle(Arena.Center, 24f);

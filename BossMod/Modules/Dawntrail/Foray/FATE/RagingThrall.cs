@@ -70,7 +70,7 @@ sealed class FocusedTremorConcentric(BossModule module) : Components.GenericAOEs
         var count = _aoes.Count;
         var max = count > 2 ? 2 : count;
         var aoes = CollectionsMarshal.AsSpan(_aoes);
-        for (var i = 0; i < max; i++)
+        for (var i = 0; i < max; ++i)
         {
             ref var aoe = ref aoes[i];
             var isFirst = i == 0;
@@ -148,7 +148,6 @@ sealed class OctupleSwipe(BossModule module) : Components.GenericAOEs(module)
     }
 }
 
-[SkipLocalsInit]
 sealed class RagingThrallStates : StateMachineBuilder
 {
     public RagingThrallStates(BossModule module) : base(module)
@@ -177,7 +176,6 @@ sealed class RagingThrallStates : StateMachineBuilder
     NameID = 2074u,
     SortOrder = 3,
     PlanLevel = 0)]
-[SkipLocalsInit]
 public sealed class RagingThrall : OpenWorldFate
 {
     public RagingThrall(WorldState ws, Actor primary) : base(ws, primary)

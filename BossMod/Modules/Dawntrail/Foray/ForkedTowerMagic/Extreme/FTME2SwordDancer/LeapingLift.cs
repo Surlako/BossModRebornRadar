@@ -1,6 +1,5 @@
 ﻿namespace BossMod.Dawntrail.Foray.ForkedTowerMagic.Extreme.FTME2SwordDancer;
 
-[SkipLocalsInit]
 sealed class Steelsbreath(BossModule module) : Components.GenericKnockback(module)
 {
     private readonly Steelsforge _steelsforge = module.FindComponent<Steelsforge>()!;
@@ -92,7 +91,7 @@ sealed class Steelsbreath(BossModule module) : Components.GenericKnockback(modul
         {
             var kbs = CollectionsMarshal.AsSpan(_knockbacks);
             var count = kbs.Length;
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count; ++i)
             {
                 Arena.TextWorld(kbs[i].Origin, $"{i + 1}", Colors.CardinalS, 12);
             }
@@ -130,7 +129,6 @@ sealed class Steelsbreath(BossModule module) : Components.GenericKnockback(modul
     }
 }
 
-[SkipLocalsInit]
 sealed class Steelsforge(BossModule module) : Components.GenericAOEs(module)
 {
     private readonly List<AOEInstance> _aoes = [];
@@ -179,7 +177,7 @@ sealed class Steelsforge(BossModule module) : Components.GenericAOEs(module)
         {
             var aoes = CollectionsMarshal.AsSpan(_aoes);
             var count = aoes.Length;
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count; ++i)
             {
                 Arena.ZoneCircle(aoes[i].Origin, 2f, Colors.CardinalN);
             }

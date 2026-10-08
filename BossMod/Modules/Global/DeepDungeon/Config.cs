@@ -72,7 +72,7 @@ public sealed class AutoDDConfig : ConfigNode
             ImGui.TextWrapped("Highlighted pomanders will be used when a gold chest contains one that you can't carry.");
             ImGui.TextWrapped("This feature is disabled in parties.");
 
-            for (var i = 1; i < (int)PomanderID.Count; i++)
+            for (var i = 1; i < (int)PomanderID.Count; ++i)
                 using (ImRaii.PushId($"pom{i}"))
                 {
                     var row = Service.LuminaRow<DeepDungeonItem>((uint)i)!.Value;

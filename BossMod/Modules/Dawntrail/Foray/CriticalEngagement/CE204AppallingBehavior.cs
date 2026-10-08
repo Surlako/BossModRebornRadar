@@ -167,7 +167,7 @@ sealed class EsotericInstruction(BossModule module) : Components.GenericAOEs(mod
 
             var count = _aoes.Count;
             var aoes = CollectionsMarshal.AsSpan(_aoes);
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count; ++i)
             {
                 aoes[i].Activation = WorldState.FutureTime((swapping ? 6.6d : 0d) + 6d + i * 4.5d);
             }
@@ -279,7 +279,6 @@ sealed class Roulette(BossModule module) : Components.GenericAOEs(module)
     }
 }
 
-[SkipLocalsInit]
 sealed class CE204AppallingBehaviorStates : StateMachineBuilder
 {
     public CE204AppallingBehaviorStates(BossModule module) : base(module)
@@ -297,7 +296,6 @@ sealed class CE204AppallingBehaviorStates : StateMachineBuilder
 }
 
 [ModuleInfo(BossModuleInfo.Maturity.Contributed, PrimaryActorOID = (uint)OID.Pallmagia, Contributors = "Gynorhino", GroupType = BossModuleInfo.GroupType.CriticalEngagement, GroupID = 1093u, NameID = 59u)]
-[SkipLocalsInit]
 public sealed class CE204AppallingBehavior(WorldState ws, Actor primary) : BossModule(ws, primary, new WPos(807f, -562f).Quantized(), new ArenaBoundsCircle(20f))
 {
     protected override bool CheckPull() => base.CheckPull() && Raid.Player()!.Position.InCircle(Arena.Center, 20f);

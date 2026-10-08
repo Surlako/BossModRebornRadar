@@ -1,6 +1,5 @@
 ﻿namespace BossMod.Dawntrail.Foray.ForkedTowerMagic.Extreme.FTME4Index;
 
-[SkipLocalsInit]
 sealed class Shockwave(BossModule module) : Components.SimpleKnockbacks(module, (uint)AID.Shockwave, 9f, shape: new AOEShapeCircle(15f), stopAfterWall: true)
 {
     // on 48-man replay helpers cast x2 for each of the 3 KBs, any different for lower player runs?
@@ -18,7 +17,7 @@ sealed class Shockwave(BossModule module) : Components.SimpleKnockbacks(module, 
         }
 
         var knockbacks = new List<Knockback>();
-        for (var i = 0; i < count; i++)
+        for (var i = 0; i < count; ++i)
         {
             // what happens if player standing in 2 circles?
             ref var kb = ref Casters.Ref(i);
@@ -45,7 +44,7 @@ sealed class Shockwave(BossModule module) : Components.SimpleKnockbacks(module, 
         if (pcount != 0)
         {
             var pkbs = CollectionsMarshal.AsSpan(pendingkbs);
-            for (var i = 0; i < pcount; i++)
+            for (var i = 0; i < pcount; ++i)
             {
                 ref var pkb = ref pkbs[i];
                 var timeleft = (pkb.Expiration - WorldState.CurrentTime).TotalSeconds;
@@ -87,7 +86,7 @@ sealed class Shockwave(BossModule module) : Components.SimpleKnockbacks(module, 
             var aoes = _quad != null ? _quad.ActiveAOEs(slot, actor) : _sealed != null ? _sealed.ActiveAOEs(slot, actor) : [];
             var aoecount = aoes.Length;
             List<Components.GenericAOEs.AOEInstance> riskyaoes = [];
-            for (var i = 0; i < aoecount; i++)
+            for (var i = 0; i < aoecount; ++i)
             {
                 var aoe = aoes[i];
                 if (aoe.Risky)
@@ -103,8 +102,8 @@ sealed class Shockwave(BossModule module) : Components.SimpleKnockbacks(module, 
                 // Arena.Center slightly off from Module.PrimaryActor.Position since height isn't even
                 // need to use Arena otherwise knockback polygon borked
                 0 => new SDKnockbackInComplexPolygonAwayFromOrigin(Arena.Center, kb.Origin, distance, Polygon),
-                1 => new SDKnockbackInComplexPolygonAwayFromOriginMixedAOEs(Arena.Center, kb.Origin, distance, Polygon, riskyaoes.ToArray(), riskycount),
-                3 => new SDKnockbackInComplexPolygonAwayFromOriginMixedAOEs(Arena.Center, kb.Origin, distance, Polygon, riskyaoes.ToArray(), riskycount),
+                1 => new SDKnockbackInComplexPolygonAwayFromOriginMixedAOEs(Arena.Center, kb.Origin, distance, Polygon, [.. riskyaoes], riskycount),
+                3 => new SDKnockbackInComplexPolygonAwayFromOriginMixedAOEs(Arena.Center, kb.Origin, distance, Polygon, [.. riskyaoes], riskycount),
                 _ => null
             };
 
@@ -124,7 +123,7 @@ sealed class Shockwave(BossModule module) : Components.SimpleKnockbacks(module, 
             {
                 // avoid circle from other 2 knockbacks
                 var kbCount = Casters.Count;
-                for (var i = 0; i < kbCount; i++)
+                for (var i = 0; i < kbCount; ++i)
                 {
                     ref var other = ref Casters.Ref(i);
                     var origin = other.Origin;

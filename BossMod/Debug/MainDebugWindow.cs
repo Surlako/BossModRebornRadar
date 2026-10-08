@@ -97,6 +97,15 @@ sealed class MainDebugWindow(WorldState ws, RotationModuleManager autorot, ZoneM
         {
             DrawEffects();
         }
+        /*
+        if (ImGui.CollapsingHeader("Gauge"))
+        {
+            var gauge = ws.Client.GaugePayload;
+            ImGui.Text($"Raw: {gauge.High:X8} {gauge.Low:X8}");
+            var as_ = ws.Client.GetGauge<BeastmasterGauge>();
+            Dalamud.Utility.Util.ShowObject(as_);
+        }
+        */
         if (ImGui.CollapsingHeader("Map effects"))
         {
             _debugMapEffect.Draw();
@@ -514,7 +523,7 @@ sealed class MainDebugWindow(WorldState ws, RotationModuleManager autorot, ZoneM
         var markers = MarkingController.Instance();
         using (ImRaii.Table("Field", 2))
         {
-            for (var i = 0; i < markers->FieldMarkers.Length; i++)
+            for (var i = 0; i < markers->FieldMarkers.Length; ++i)
             {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
@@ -526,7 +535,7 @@ sealed class MainDebugWindow(WorldState ws, RotationModuleManager autorot, ZoneM
 
         using (ImRaii.Table("Target", 2))
         {
-            for (var i = 0; i < markers->Markers.Length; i++)
+            for (var i = 0; i < markers->Markers.Length; ++i)
             {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();

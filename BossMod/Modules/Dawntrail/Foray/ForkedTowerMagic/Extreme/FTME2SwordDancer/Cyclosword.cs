@@ -1,6 +1,5 @@
 ﻿namespace BossMod.Dawntrail.Foray.ForkedTowerMagic.Extreme.FTME2SwordDancer;
 
-[SkipLocalsInit]
 sealed class Cyclosword(BossModule module) : Components.GenericAOEs(module)
 {
     private readonly List<AOEInstance> _aoes = [];
@@ -26,7 +25,7 @@ sealed class Cyclosword(BossModule module) : Components.GenericAOEs(module)
             var actorId = aoe0.ActorID;
             List<AOEInstance> subset = [aoe0];
 
-            for (var i = 1; i < count; i++)
+            for (var i = 1; i < count; ++i)
             {
                 if (subset.Count == max)
                     break;
@@ -130,7 +129,7 @@ sealed class Cyclosword(BossModule module) : Components.GenericAOEs(module)
             }
             else
             {
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < count; ++i)
                 {
                     var aoe = aoes[i];
                     AddGoalZone(aoe, hints);
@@ -138,7 +137,7 @@ sealed class Cyclosword(BossModule module) : Components.GenericAOEs(module)
             }
         }
 
-        void AddGoalZone(AOEInstance aoe, AIHints hints)
+        static void AddGoalZone(AOEInstance aoe, AIHints hints)
         {
             var goalBuffer = 3f;
 

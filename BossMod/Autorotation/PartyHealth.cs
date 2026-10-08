@@ -1,4 +1,4 @@
-﻿namespace BossMod.Autorotation.xan;
+﻿namespace BossMod.Autorotation;
 
 public sealed class TrackPartyHealth(WorldState World)
 {
@@ -54,6 +54,7 @@ public sealed class TrackPartyHealth(WorldState World)
         1836, // Superbolide
         2685, // Catharsis of Corundum
         (uint)WAR.SID.BloodwhettingDefenseLong,
+        3902, // Vigilant
 
         // everything called "HP Recovery Down"
         2852,
@@ -64,45 +65,65 @@ public sealed class TrackPartyHealth(WorldState World)
         // Accretion, triggers earth raidwide when healing target to full, let players handle it manually
         1604
     ];
+
+    private static readonly uint[] DoomStatuses = [
+        1769
+    ];
+
     private float StatusDuration(DateTime expireAt) => Math.Max((float)(expireAt - World.CurrentTime).TotalSeconds, 0.0f);
 
     private PartyHealthState CalculatePartyHealthState(Func<Actor, bool> filter)
     {
         var count = 0;
-        float meanPred = 0;
-        float meanPred2 = 0;
+        var meanPred = 0f;
+        var meanPred2 = 0f;
         var minPred = float.MaxValue;
         var minSlotPred = -1;
-        float meanCur = 0;
-        float meanCur2 = 0;
+        var meanCur = 0f;
+        var meanCur2 = 0f;
         var minCur = float.MaxValue;
         var minSlotCur = -1;
-
-        foreach (var slot in _trackedActors.SetBits())
+        var invCount = 0f;
+        var mask = _trackedActors.SetBits();
+        var len = mask.Length;
+        for (var i = 0; i < len; ++i)
         {
-            var p = PartyMemberStates[slot];
+            var p = PartyMemberStates[mask[i]];
             var act = World.Party[p.Slot];
             if (act == null || !filter(act))
+            {
                 continue;
+            }
 
             // player has tank invuln/excog/etc, skip them
             if (p.NoHealStatusRemaining > 1.5f && p.DoomRemaining == 0)
+            {
                 continue;
+            }
 
             // no amount of healing can save player, skip them
-            if (act.PendingHPDifferences.Any(p => -p.Value >= act.HPMP.MaxHP))
-                continue;
+            var diffs = CollectionsMarshal.AsSpan(act.PendingHPDifferences);
+            var lenD = diffs.Length;
+            for (var j = 0; j < lenD; ++j)
+            {
+                if (-diffs[j].Value >= act.HPMP.MaxHP)
+                {
+                    goto skip;
+                }
+            }
 
             ++count;
 
-            var valCurrent = p.DoomRemaining > 0 ? 0.01f : p.CurrentHPRatio;
+            var valCurrent = p.DoomRemaining > 0f ? 0.01f : p.CurrentHPRatio;
             if (valCurrent < minCur)
             {
                 minCur = valCurrent;
                 minSlotCur = p.Slot;
             }
+
+            invCount = 1f / count;
             var deltaCur = valCurrent - meanCur;
-            meanCur += deltaCur / count;
+            meanCur += deltaCur * invCount;
             var deltaCur2 = valCurrent - meanCur;
             meanCur2 += deltaCur * deltaCur2;
 
@@ -113,13 +134,16 @@ public sealed class TrackPartyHealth(WorldState World)
                 minSlotPred = p.Slot;
             }
             var deltaPred = valPredicted - meanPred;
-            meanPred += deltaPred / count;
+            meanPred += deltaPred * invCount;
             var deltaPred2 = valPredicted - meanPred;
             meanPred2 += deltaPred * deltaPred2;
+
+        skip:
+            ;
         }
 
-        var variancePred = meanPred2 / count;
-        var varianceCur = meanCur2 / count;
+        var variancePred = meanPred2 * invCount;
+        var varianceCur = meanCur2 * invCount;
         return new PartyHealthState()
         {
             LowestHPSlotCurrent = minSlotCur,
@@ -154,7 +178,7 @@ public sealed class TrackPartyHealth(WorldState World)
     {
         // copied from veyn's HealerActions in EW bossmod - i am a thief
         BitMask esunas = default;
-        foreach (var caster in World.Party.WithoutSlot(excludeAlliance: true).Where(a => a.CastInfo?.IsSpell(BossMod.WHM.AID.Esuna) ?? false))
+        foreach (var caster in World.Party.WithoutSlot(excludeAlliance: true).Where(a => a.CastInfo?.IsSpell(WHM.AID.Esuna) == true))
             esunas.Set(World.Party.FindSlot(caster.CastInfo!.TargetID));
 
         _haveRealPartyMembers = false;
@@ -207,7 +231,7 @@ public sealed class TrackPartyHealth(WorldState World)
                 if (NoHealStatuses.Contains(s.ID))
                     state.NoHealStatusRemaining = StatusDuration(s.ExpireAt);
 
-                if (s.ID == 1769)
+                if (DoomStatuses.Contains(s.ID))
                     state.DoomRemaining = StatusDuration(s.ExpireAt);
             }
 
