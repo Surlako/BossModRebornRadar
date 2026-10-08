@@ -2,6 +2,8 @@ name: Publish
 
 on:
   push:
+    branches: [main]
+    paths: [release-version.txt]
     tags:
       - "*.*.*.*"
   workflow_dispatch:
@@ -17,13 +19,33 @@ permissions:
 jobs:
   release:
     runs-on: windows-latest
-    env:
-      RELEASE_TAG: ${{ inputs.version || github.ref_name }}
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
           submodules: true
+
+      - name: Resolve release version
+        id: version
+        shell: pwsh
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          $version = $env:INPUT_VERSION
+          if ([string]::IsNullOrWhiteSpace($version)) {
+            $version = if ($env:GITHUB_REF_TYPE -eq "tag") {
+              $env:GITHUB_REF_NAME
+            } else {
+              (Get-Content ./release-version.txt -Raw).Trim()
+            }
+          }
+          if ($version -notmatch '^\d+\.\d+\.\d+\.\d+$') {
+            throw "Release version must have four numeric components."
+          }
+          "RELEASE_TAG=$version" | Out-File -Append -FilePath $env:GITHUB_ENV
+          "version=$version" | Out-File -Append -FilePath $env:GITHUB_OUTPUT
 
       - name: Verify radar-only boundary
         shell: pwsh
@@ -61,12 +83,13 @@ jobs:
           files: ./latest.zip
           generate_release_notes: true
           tag_name: ${{ env.RELEASE_TAG }}
+          target_commitish: ${{ github.sha }}
 
   catalog:
     needs: release
     runs-on: windows-latest
     env:
-      RELEASE_TAG: ${{ inputs.version || github.ref_name }}
+      RELEASE_TAG: ${{ needs.release.outputs.version }}
     steps:
       - name: Checkout main
         uses: actions/checkout@v6
