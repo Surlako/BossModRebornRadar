@@ -25,7 +25,7 @@ sealed class SparkPuddle(BossModule module) : Components.Voidzone(module, 10f, G
         var count = enemies.Count;
         var index = 0;
         var puddles = new Actor[count];
-        for (var i = 0; i < count; i++)
+        for (var i = 0; i < count; ++i)
         {
             var z = enemies[i];
             if (z.EventState != 7)
@@ -43,5 +43,4 @@ sealed class ScouringScorn(BossModule module) : Components.RaidwideCast(module, 
 
 [ModuleInfo(BossModuleInfo.Maturity.Contributed, PrimaryActorOID = (uint)OID.PariOfPlenty, Contributors = "HerStolenLight", Category = BossModuleInfo.Category.VariantCriterion,
 GroupType = BossModuleInfo.GroupType.CFC, GroupID = 1084u, NameID = 14274u, SortOrder = 1)]
-[SkipLocalsInit]
 public sealed class PariOfPlenty(WorldState ws, Actor primary) : BossModule(ws, primary, new(-760f, -805f), new ArenaBoundsSquare(20f));

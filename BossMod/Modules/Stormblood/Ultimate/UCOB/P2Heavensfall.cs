@@ -1,10 +1,22 @@
-﻿namespace BossMod.Stormblood.Ultimate.UCOB;
+﻿using static BossMod.PartyRolesConfig;
 
-sealed class P2Heavensfall(BossModule module) : Components.GenericKnockback(module, (uint)AID.Heavensfall)
+namespace BossMod.Stormblood.Ultimate.UCOB;
+
+abstract class Heavensfall(BossModule module) : Components.GenericKnockback(module, (uint)AID.Heavensfall)
 {
+    public DateTime Activation;
+
     public override ReadOnlySpan<Knockback> ActiveKnockbacks(int slot, Actor actor)
     {
-        return new Knockback[1] { new(Arena.Center, 11f, ignoreImmunes: true) }; // TODO: activation
+        return new Knockback[1] { new(Arena.Center, 11f, Activation, ignoreImmunes: true) };
+    }
+}
+
+sealed class P2Heavensfall(BossModule module) : Heavensfall(module)
+{
+    public override void AddAIHints(int slot, Actor actor, Assignment assignment, AIHints hints)
+    {
+        hints.AddForbiddenZone(new SDPrecisePosition(new WPos(0f, 9f), new(0f, 1f), 0.5f, actor.Position, 0.1f), Activation);
     }
 }
 
@@ -19,7 +31,9 @@ sealed class P2HeavensfallPillar(BossModule module) : Components.GenericAOEs(mod
     public override void OnActorEAnim(Actor actor, uint state)
     {
         if (actor.OID != (uint)OID.EventHelper)
+        {
             return;
+        }
         switch (state)
         {
             case 0x00040008u: // appear
@@ -37,34 +51,74 @@ sealed class P2HeavensfallPillar(BossModule module) : Components.GenericAOEs(mod
     }
 }
 
-sealed class P2ThermionicBurst(BossModule module) : Components.SimpleAOEs(module, (uint)AID.ThermionicBurst, new AOEShapeCone(24.5f, 11.25f.Degrees()));
+abstract class ThermionicBurst(BossModule module) : Components.SimpleAOEs(module, (uint)AID.ThermionicBurst, new AOEShapeCone(24.5f, 11.25f.Degrees()));
 
-sealed class P2MeteorStream : Components.UniformStackSpread
+sealed class P2ThermionicBurst(BossModule module) : ThermionicBurst(module);
+
+abstract class MeteorStream(BossModule module) : Components.UniformStackSpread(module, 0f, 4f)
 {
     public int NumCasts;
-
-    public P2MeteorStream(BossModule module) : base(module, default, 4f)
-    {
-        AddSpreads(Raid.WithoutSlot(true, true, true), WorldState.FutureTime(5.6d));
-    }
 
     public override void OnEventCast(Actor caster, ActorCastEvent spell)
     {
         if (spell.Action.ID == (uint)AID.MeteorStream)
         {
             ++NumCasts;
+
+            var count = Spreads.Count;
+            var id = spell.MainTargetID;
+            var spreads = CollectionsMarshal.AsSpan(Spreads);
+            for (var i = 0; i < count; ++i)
             {
-                var count = Spreads.Count;
-                var id = spell.MainTargetID;
-                for (var i = 0; i < count; ++i)
+                if (spreads[i].Target.InstanceID == id)
                 {
-                    if (Spreads[i].Target.InstanceID == id)
-                    {
-                        Spreads.RemoveAt(i);
-                        return;
-                    }
+                    Spreads.RemoveAt(i);
+                    return;
                 }
             }
+            // update activation time for second set
+            if (NumCasts == 4)
+            {
+                spreads = CollectionsMarshal.AsSpan(Spreads);
+                var act = WorldState.FutureTime(3.1d);
+                for (var i = 0; i < 4; ++i)
+                {
+                    spreads[i].Activation = act;
+                }
+            }
+        }
+    }
+}
+
+sealed class P2MeteorStream : MeteorStream
+{
+    public P2MeteorStream(BossModule module) : base(module)
+    {
+        AddSpreads(Raid.WithoutSlot(true), WorldState.FutureTime(5.6d));
+    }
+
+    public override void AddAIHints(int slot, Actor actor, Assignment assignment, AIHints hints)
+    {
+        if (Spreads.Count == 8)
+        {
+            var (dist, angle) = assignment switch
+            {
+                Assignment.MT => (9f, -11.25f.Degrees()),
+                Assignment.OT => (9f, 11.25f.Degrees()),
+                Assignment.H1 => (18f, -11.25f.Degrees()),
+                Assignment.H2 => (18f, 11.25f.Degrees()),
+                Assignment.M1 => (9f, -56.25f.Degrees()),
+                Assignment.M2 => (9f, 56.25f.Degrees()),
+                Assignment.R1 => (18f, -56.25f.Degrees()),
+                Assignment.R2 => (18f, 56.25f.Degrees()),
+                _ => default
+            };
+
+            hints.AddForbiddenZone(new SDInvertedCircle(Arena.Center + angle.ToDirection() * dist, 2f), Spreads.Ref(0).Activation);
+        }
+        else
+        {
+            base.AddAIHints(slot, actor, assignment, hints);
         }
     }
 }
@@ -80,6 +134,38 @@ sealed class P2HeavensfallDalamudDive(BossModule module) : Components.GenericBai
         if (_target != null)
         {
             CurrentBaits.Add(new(_target, _target, _shape));
+        }
+    }
+
+    public override void AddAIHints(int slot, Actor actor, Assignment assignment, AIHints hints)
+    {
+        var baits = CollectionsMarshal.AsSpan(CurrentBaits);
+        var len = baits.Length;
+        var isTarget = false;
+        for (var i = 0; i < len; ++i)
+        {
+            if (baits[i].Target == actor)
+            {
+                isTarget = true;
+                break;
+            }
+        }
+        if (!isTarget)
+        {
+            base.AddAIHints(slot, actor, assignment, hints);
+        }
+
+        // preposition close to nael
+        if (actor.Role is Role.Melee or Role.Tank)
+        {
+            for (var i = 0; i < len; ++i)
+            {
+                var t = baits[i].Target;
+                if (t != actor)
+                {
+                    hints.GoalZones.Add(AIHints.GoalSingleTarget(t.Position, 6f));
+                }
+            }
         }
     }
 }

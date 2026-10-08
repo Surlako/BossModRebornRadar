@@ -6,7 +6,8 @@ sealed class FTME1TwoHeadedAevisStates : StateMachineBuilder
     public FTME1TwoHeadedAevisStates(FTME1TwoHeadedAevis module) : base(module)
     {
         _module = module;
-        DeathPhase(default, SinglePhase);
+        DeathPhase(0u, SinglePhase)
+            .Raw.Update = () => AllDeadOrDestroyed(FTME1TwoHeadedAevis.Bosses);
     }
 
     private void SinglePhase(uint id)
@@ -29,24 +30,24 @@ sealed class FTME1TwoHeadedAevisStates : StateMachineBuilder
         ArcaneFugue(id + 0xF0000u, 5.2f);
         ThunderfrostTempest(id + 0x100000u, 4.4f);
         BreathyDuet(id + 0x110000u, 7.3f);
-        ArchaeoFury(id + 0xB0000u, 5f); // unsure actual time
+        ArchaeoFury(id + 0x120000u, 5f); // unsure actual time
         //Enrage
     }
 
     private void Buffet(uint id, float delay)
     {
-        ActorCast(id, _module.GreenHead, AID.Buffet, delay, 5f, true, "Assigning boss")
+        Cast(id, AID.Buffet, delay, 5f, "Assigning boss")
             .ActivateOnEnter<Buffet>();
     }
 
     private void FugueBreath(uint id, float delay)
     {
-        Condition(id, delay, () => _module.GreenHead()!.CastInfo != null || _module.BlueHead()!.CastInfo != null, "")
+        Condition(id, delay, () => _module.PrimaryActor.CastInfo != null || _module.BlueHead()!.CastInfo != null)
             .ActivateOnEnter<FreezingFugue>()
             .ActivateOnEnter<StormsBreath>()
             .ActivateOnEnter<FulgurousFugue>()
             .ActivateOnEnter<PoisonBreath>();
-        Condition(id + 0x1000u, 8.9f, () => _module.GreenHead()!.CastInfo == null || _module.BlueHead()!.CastInfo == null, "Breath + Fugue")
+        Condition(id + 0x1000u, 8.9f, () => _module.PrimaryActor.CastInfo == null || _module.BlueHead()!.CastInfo == null, "Breath + Fugue")
             .DeactivateOnExit<PoisonBreath>()
             .DeactivateOnExit<FulgurousFugue>()
             .DeactivateOnExit<StormsBreath>()
@@ -55,33 +56,33 @@ sealed class FTME1TwoHeadedAevisStates : StateMachineBuilder
 
     private void ThunderfrostTempest(uint id, float delay)
     {
-        ActorCast(id, _module.GreenHead, AID.ThunderfrostTempest, delay, 5f, true, "Raidwide")
+        Cast(id, AID.ThunderfrostTempest, delay, 5f, "Raidwide")
             .ActivateOnEnter<ThunderfrostTempest>()
             .DeactivateOnExit<ThunderfrostTempest>();
     }
 
     private void ArchaeoFury(uint id, float delay)
     {
-        ActorCastStart(id, _module.GreenHead, AID.ArchaeofuryCast, delay)
+        CastStart(id, AID.ArchaeofuryCast, delay)
             .ActivateOnEnter<Archaeofury>();
-        ComponentCondition<Archaeofury>(id + 0x1000u, 0f, static comp => comp.ActiveSpreads.Count != 0, "");
+        ComponentCondition<Archaeofury>(id + 0x1000u, 0f, static comp => comp.ActiveSpreads.Count != 0);
         ComponentCondition<Archaeofury>(id + 0x2000u, 5f, static comp => comp.ActiveSpreads.Count == 0, "Tankbuster spread")
             .DeactivateOnExit<Archaeofury>();
     }
 
     private void CrossBlazeLoop(uint id, float delay)
     {
-        Condition(id, delay, () => _module.Green1()?.CastInfo?.Action.ID == (uint)AID.BlazeFirstCast || _module.Blue1()?.CastInfo?.Action.ID == (uint)AID.BlazeFirstCast, "")
+        Condition(id, delay, () => _module.Green1()?.CastInfo?.Action.ID == (uint)AID.BlazeFirstCast || _module.Blue1()?.CastInfo?.Action.ID == (uint)AID.BlazeFirstCast, "Cross Blaze Loop start")
             .ActivateOnEnter<CrossBlazeLoop>();
-        ComponentCondition<CrossBlazeLoop>(id + 0x1000u, 25.1f, static comp => comp.ActiveCasters.Length == 0, "CrossBlazeLoop")
+        ComponentCondition<CrossBlazeLoop>(id + 0x1000u, 25.1f, static comp => comp.AOEs.Count == 0, "Cross Blaze Loop ends")
             .DeactivateOnExit<CrossBlazeLoop>();
     }
 
     private void ArcaneTerror(uint id, float delay)
     {
-        ActorCast(id, _module.GreenHead, AID.ArcaneRevelation, delay, 3f, true, "")
+        Cast(id, AID.ArcaneRevelation, delay, 3f)
             .ActivateOnEnter<ArcaneRevelation>();
-        ActorCastMulti(id + 0x1000u, _module.GreenHead, [AID.TwoTerrors1, AID.TwoTerrors2], 3.1f, 7f, true, "Arcane + Two Terrors")
+        Cast(id + 0x1000u, AID.TwoTerrorsVisual, 3.1f, 7f, "Arcane + Two Terrors")
             .ActivateOnEnter<TwoTerrorsThin>()
             .ActivateOnEnter<TwoTerrorsWide>()
             .DeactivateOnExit<TwoTerrorsWide>()
@@ -91,7 +92,7 @@ sealed class FTME1TwoHeadedAevisStates : StateMachineBuilder
 
     private void BreathyDuet(uint id, float delay)
     {
-        ActorCast(id, _module.GreenHead, AID.Summon, delay, 3f, true)
+        Cast(id, AID.Summon, delay, 3f)
             .ActivateOnEnter<BreathyDuet>();
         ComponentCondition<BreathyDuet>(id + 0x1000u, 31.5f, static comp => comp.NumCasts >= 4, "Breathy Duet")
             .DeactivateOnExit<BreathyDuet>();
@@ -99,7 +100,7 @@ sealed class FTME1TwoHeadedAevisStates : StateMachineBuilder
 
     private void ArcaneFugue(uint id, float delay)
     {
-        ActorCast(id, _module.GreenHead, AID.ArcaneRevelation, delay, 3f, true, "")
+        Cast(id, AID.ArcaneRevelation, delay, 3f)
             .ActivateOnEnter<ArcaneRevelation>()
             .ActivateOnEnter<FreezingFulgurousFugue>();
         ComponentCondition<ArcaneRevelation>(id + 0x1000u, 18.2f, static comp => comp.NumCasts >= 16, "Arcane + Circle/Donut")
@@ -109,11 +110,11 @@ sealed class FTME1TwoHeadedAevisStates : StateMachineBuilder
 
     private void HissingResonance(uint id, float delay)
     {
-        ActorCast(id, _module.GreenHead, AID.HissingResonance, delay, 3f, true, "")
+        Cast(id, AID.HissingResonance, delay, 3f)
             .ActivateOnEnter<HissingResonance>();
-        Condition(id + 0x1000u, 3.1f, () => _module.Green1()?.CastInfo?.Action.ID == (uint)AID.BlazeFirstCast || _module.Blue1()?.CastInfo?.Action.ID == (uint)AID.BlazeFirstCast, "")
+        Condition(id + 0x1000u, 3.1f, () => _module.Green1()?.CastInfo?.Action.ID == (uint)AID.BlazeFirstCast || _module.Blue1()?.CastInfo?.Action.ID == (uint)AID.BlazeFirstCast)
             .ActivateOnEnter<CrossBlazeLoop>();
-        ComponentCondition<CrossBlazeLoop>(id + 0x1000u, 25.1f, static comp => comp.ActiveCasters.Length == 0, "KB + CrossBlazeLoop")
+        ComponentCondition<CrossBlazeLoop>(id + 0x2000u, 25.1f, static comp => comp.AOEs.Count == 0, "KB + CrossBlazeLoop")
             .DeactivateOnExit<HissingResonance>()
             .DeactivateOnExit<CrossBlazeLoop>();
     }

@@ -39,7 +39,7 @@ public struct Cooldown(float elapsed, float total) : IEquatable<Cooldown>
 
     public readonly bool Equals(Cooldown other) => this == other;
     public override readonly bool Equals(object? obj) => obj is Cooldown other && Equals(other);
-    public override readonly int GetHashCode() => (Elapsed, Total).GetHashCode();
+    public override readonly int GetHashCode() => HashCode.Combine(Elapsed, Total);
     public override readonly string ToString() => $"{Elapsed:f3}/{Total:f3}";
 }
 
@@ -47,7 +47,7 @@ public struct Cooldown(float elapsed, float total) : IEquatable<Cooldown>
 // this is generally not available for non-player party members, but we can try to guess
 public sealed class ClientState
 {
-    public readonly struct Fate(uint id, Vector3 center, float radius, byte progress, byte handInCount, uint objectiveNpc)
+    public readonly struct Fate(uint id, Vector3 center, float radius, byte progress, byte handInCount, uint objectiveNpc) : IEquatable<Fate>
     {
         public readonly uint ID = id;
         public readonly Vector3 Center = center;
@@ -64,7 +64,7 @@ public sealed class ClientState
         public override readonly int GetHashCode() => ID.GetHashCode();
     }
 
-    public struct Combo(uint action, float remaining)
+    public struct Combo(uint action, float remaining) : IEquatable<Combo>
     {
         public readonly uint Action = action;
         public float Remaining = remaining;
@@ -74,7 +74,7 @@ public sealed class ClientState
 
         public readonly bool Equals(Combo other) => this == other;
         public override readonly bool Equals(object? obj) => obj is Combo other && Equals(other);
-        public override readonly int GetHashCode() => (Action, Remaining).GetHashCode();
+        public override readonly int GetHashCode() => HashCode.Combine(Action, Remaining);
     }
 
     public readonly struct Gauge(ulong low, ulong high)
@@ -83,7 +83,7 @@ public sealed class ClientState
         public readonly ulong High = high;
     }
 
-    public readonly struct Stats(int skillSpeed, int spellSpeed, int haste)
+    public readonly struct Stats(int skillSpeed, int spellSpeed, int haste) : IEquatable<Stats>
     {
         public readonly int SkillSpeed = skillSpeed;
         public readonly int SpellSpeed = spellSpeed;
@@ -94,10 +94,10 @@ public sealed class ClientState
 
         public readonly bool Equals(Stats other) => this == other;
         public override readonly bool Equals(object? obj) => obj is Combo other && Equals(other);
-        public override readonly int GetHashCode() => (SkillSpeed, SpellSpeed, Haste).GetHashCode();
+        public override readonly int GetHashCode() => HashCode.Combine(SkillSpeed, SpellSpeed, Haste);
     }
 
-    public readonly struct Pet(ulong instanceID, byte order, byte stance)
+    public readonly struct Pet(ulong instanceID, byte order, byte stance) : IEquatable<Pet>
     {
         public readonly ulong InstanceID = instanceID;
         public readonly byte Order = order;
@@ -111,7 +111,7 @@ public sealed class ClientState
         public override readonly int GetHashCode() => InstanceID.GetHashCode();
     }
 
-    public readonly struct Companion(ulong instanceID, byte stance, float timeLeft, bool stabled)
+    public readonly struct Companion(ulong instanceID, byte stance, float timeLeft, bool stabled) : IEquatable<Companion>
     {
         public readonly ulong InstanceID = instanceID;
         public readonly byte Stance = stance;
@@ -123,11 +123,11 @@ public sealed class ClientState
 
         public readonly bool Equals(Companion other) => this == other;
         public override readonly bool Equals(object? obj) => obj is Companion other && Equals(other);
-        public override readonly int GetHashCode() => (InstanceID, Stance, TimeLeft).GetHashCode();
+        public override readonly int GetHashCode() => HashCode.Combine(InstanceID, Stance, TimeLeft);
         public override readonly string ToString() => $"ID: {InstanceID}, Stance: {Stance}";
     }
 
-    public readonly struct DutyAction(ActionID action, byte curCharges, byte maxCharges)
+    public readonly struct DutyAction(ActionID action, byte curCharges, byte maxCharges) : IEquatable<DutyAction>
     {
         public readonly ActionID Action = action;
         public readonly byte CurCharges = curCharges;
@@ -138,7 +138,7 @@ public sealed class ClientState
 
         public readonly bool Equals(DutyAction other) => this == other;
         public override readonly bool Equals(object? obj) => obj is DutyAction other && Equals(other);
-        public override readonly int GetHashCode() => (Action, CurCharges, MaxCharges).GetHashCode();
+        public override readonly int GetHashCode() => HashCode.Combine(Action, CurCharges, MaxCharges);
         public override string ToString() => $"ID: {Action.ID}, Charges: {CurCharges}/{MaxCharges}";
     }
 
@@ -150,7 +150,7 @@ public sealed class ClientState
         public readonly Hate[] Targets = targets;
     }
 
-    public readonly struct Hate(ulong instanceID, int enmity)
+    public readonly struct Hate(ulong instanceID, int enmity) : IEquatable<Hate>
     {
         public readonly ulong InstanceID = instanceID;
         public readonly int Enmity = enmity;
@@ -160,7 +160,7 @@ public sealed class ClientState
 
         public readonly bool Equals(Hate other) => this == other;
         public override readonly bool Equals(object? obj) => obj is Hate other && Equals(other);
-        public override readonly int GetHashCode() => (InstanceID, Enmity).GetHashCode();
+        public override readonly int GetHashCode() => HashCode.Combine(InstanceID, Enmity);
     }
 
     public const int NumCooldownGroups = 87;
@@ -168,6 +168,8 @@ public sealed class ClientState
     public const int NumBlueMageSpells = 24;
     public const int NumDutyActions = 5;
     public const int NumHateTargets = 32;
+    public const int NumBeastmasterBeasts = 3;
+
     public float? CountdownRemaining;
     public Angle CameraAzimuth; // updated every frame by the frame-start event
     public Gauge GaugePayload; // updated every frame by the frame-start event
@@ -181,6 +183,7 @@ public sealed class ClientState
     public readonly byte[] BozjaHolster = new byte[(int)BozjaHolsterID.Count]; // number of copies in holster per item
     public readonly uint[] BlueMageSpells = new uint[NumBlueMageSpells];
     public readonly short[] ClassJobLevels = new short[NumClassLevels];
+    public readonly byte[] BeastmasterBeasts = new byte[NumBeastmasterBeasts];
     public Fate ActiveFate;
     public Pet ActivePet;
     public Companion ActiveCompanion;
@@ -323,6 +326,15 @@ public sealed class ClientState
             }
         }
 
+        for (var i = 0; i < NumBeastmasterBeasts; ++i)
+        {
+            if (BeastmasterBeasts[i] != default)
+            {
+                ops.Add(new OpBeastmasterBeastsChanged(BeastmasterBeasts));
+                break;
+            }
+        }
+
         for (var i = 0; i < NumClassLevels; ++i)
         {
             if (ClassJobLevels[i] != default)
@@ -367,6 +379,13 @@ public sealed class ClientState
                     ops.Add(new OpHateChange(hate.InstanceID, hate.Targets));
                     break;
                 }
+            }
+        }
+        foreach (var (id, quant) in Inventory)
+        {
+            if (quant > 0u)
+            {
+                ops.Add(new OpInventoryChange(id, quant));
             }
         }
         return ops;
@@ -603,7 +622,8 @@ public sealed class ClientState
         protected override void Exec(WorldState ws)
         {
             Array.Fill(ws.Client.BozjaHolster, (byte)0);
-            for (var i = 0; i < Contents.Count; ++i)
+            var count = Contents.Count;
+            for (var i = 0; i < count; ++i)
             {
                 var e = Contents[i];
                 ws.Client.BozjaHolster[(int)e.entry] = e.count;
@@ -639,7 +659,30 @@ public sealed class ClientState
         {
             var len = Values.Length;
             output.EmitFourCC("CBLU"u8);
-            output.Emit((byte)Values.Length);
+            output.Emit((byte)len);
+            for (var i = 0; i < len; ++i)
+            {
+                output.Emit(Values[i]);
+            }
+        }
+    }
+
+    public Event<OpBeastmasterBeastsChanged> BeastmasterBeastsChanged = new();
+    public sealed class OpBeastmasterBeastsChanged(byte[] values) : WorldState.Operation
+    {
+        public readonly byte[] Values = values;
+
+        protected override void Exec(WorldState ws)
+        {
+            Array.Copy(Values, ws.Client.BeastmasterBeasts, NumBeastmasterBeasts);
+            ws.Client.BeastmasterBeastsChanged.Fire(this);
+        }
+
+        public override void Write(ReplayRecorder.Output output)
+        {
+            output.EmitFourCC("CBST"u8);
+            var len = Values.Length;
+            output.Emit((byte)len);
             for (var i = 0; i < len; ++i)
             {
                 output.Emit(Values[i]);

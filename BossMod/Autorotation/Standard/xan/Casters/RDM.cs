@@ -180,9 +180,9 @@ public sealed class RDM(RotationModuleManager manager, Actor player) : Castxan<A
             : 20;
 
         if (primaryTarget is { } tar && ManaficLeft < GCD && (SwordplayStacks > 0 || LowestMana >= comboMana || InMeleeCombo))
-            Hints.GoalZones.Add(GoalSingleTarget(tar.Actor, 3));
+            Hints.GoalZones.Add(Hints.GoalSingleTarget(tar.Actor, Player, World.Actors, 3f));
 
-        GoalZoneSingle(25);
+        GoalZoneSingle(25f);
 
         DoGCD(strategy, primaryTarget, comboMana);
         OGCD(strategy, primaryTarget);
@@ -192,7 +192,7 @@ public sealed class RDM(RotationModuleManager manager, Actor player) : Castxan<A
     {
         // combo continuations
         if (ComboLastMove is AID.Scorch)
-            PushGCD(AID.Resolution, BestLineTarget, GCDPriority.Combo);
+            PushGCD(AID.Resolution, BestLineTarget, GCDPriority.Combo, setRotation: NumLineTargets > 1);
 
         if (ComboLastMove is AID.Verflare or AID.Verholy)
             PushGCD(AID.Scorch, BestAOETarget, GCDPriority.Combo);
@@ -207,10 +207,10 @@ public sealed class RDM(RotationModuleManager manager, Actor player) : Castxan<A
             PushGCD(AID.Zwerchhau, primaryTarget, GCDPriority.Combo);
 
         if (ComboLastMove == AID.EnchantedMoulinetDeux)
-            PushGCD(AID.EnchantedMoulinetTrois, BestConeTarget, GCDPriority.Combo);
+            PushGCD(AID.EnchantedMoulinetTrois, BestConeTarget, GCDPriority.Combo, setRotation: NumConeTargets > 1);
 
         if (ComboLastMove == AID.EnchantedMoulinet)
-            PushGCD(AID.EnchantedMoulinetDeux, BestConeTarget, GCDPriority.Combo);
+            PushGCD(AID.EnchantedMoulinetDeux, BestConeTarget, GCDPriority.Combo, setRotation: NumConeTargets > 1);
 
         if (strategy.Combo != ComboStrategy.Break && InCombo)
             return;

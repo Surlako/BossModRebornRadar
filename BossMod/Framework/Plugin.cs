@@ -14,7 +14,7 @@ namespace BossMod;
 // intentionally exposes no BossMod IPC and owns no code path that can execute actions.
 public sealed class Plugin : IAsyncDalamudPlugin
 {
-    public string Name => "BossMod Reborn Radar";
+    public static string Name => "BossMod Reborn Radar";
 
     private readonly IDalamudPluginInterface _dalamud;
     private readonly ICommandManager _commandManager;
@@ -32,6 +32,7 @@ public sealed class Plugin : IAsyncDalamudPlugin
     private ConfigUI _configUI = null!;
     private BossModuleMainWindow _wndBossmod = null!;
     private BossModuleHintsWindow _wndBossmodHints = null!;
+    private BossModulePrePullHintsWindow _wndBossmodPrePullHints = null!;
 
     public Plugin(IDalamudPluginInterface dalamud, ICommandManager commandManager, ISigScanner sigScanner, IDataManager dataManager)
     {
@@ -96,6 +97,7 @@ public sealed class Plugin : IAsyncDalamudPlugin
         _wndBossmod = new(_bossmod, _zonemod);
         Service.BossModWindow = _wndBossmod;
         _wndBossmodHints = new(_bossmod, _zonemod);
+        _wndBossmodPrePullHints = new(_bossmod);
         _configUI = new(Service.Config, _ws, null, null, true);
 
         _dalamud.UiBuilder.DisableAutomaticUiHide = true;
@@ -118,6 +120,7 @@ public sealed class Plugin : IAsyncDalamudPlugin
             Dx11ArenaRenderer.Shutdown();
         });
 
+        _wndBossmodPrePullHints.Dispose();
         _wndBossmodHints.Dispose();
         _wndBossmod.Dispose();
         _configUI.Dispose();

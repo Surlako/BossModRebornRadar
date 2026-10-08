@@ -138,6 +138,8 @@ public sealed class MNK(RotationModuleManager manager, Actor player) : Attackxan
         ForceOpo,
         [Option("Use 3 GCDs before next RoF window, regardless of current form", MinLevel = 50)]
         ForceMinus3,
+        [Option("Use ASAP unless under the effect of Form Shift")]
+        ForceNoShift,
         [Option("Use ASAP", MinLevel = 50)]
         Force,
         [Option("Do not use", MinLevel = 50)]
@@ -492,14 +494,14 @@ public sealed class MNK(RotationModuleManager manager, Actor player) : Attackxan
         switch (strategy.WindsReply.Value)
         {
             case WRStrategy.Automatic:
-                PushGCD(AID.WindsReply, WindTarget, expiring || buffsExpiring ? GCDPriority.WindsReply : GCDPriority.WindRanged);
+                PushGCD(AID.WindsReply, WindTarget, expiring || buffsExpiring ? GCDPriority.WindsReply : GCDPriority.WindRanged, setRotation: NumWindTargets > 1);
                 break;
             case WRStrategy.Force:
-                PushGCD(AID.WindsReply, WindTarget, GCDPriority.WindsReply);
+                PushGCD(AID.WindsReply, WindTarget, GCDPriority.WindsReply, setRotation: NumWindTargets > 1);
                 break;
             case WRStrategy.Multi:
                 if (NumWindTargets > 1 || expiring)
-                    PushGCD(AID.WindsReply, WindTarget, GCDPriority.WindsReply);
+                    PushGCD(AID.WindsReply, WindTarget, GCDPriority.WindsReply, setRotation: NumWindTargets > 1);
                 break;
         }
     }
@@ -582,7 +584,7 @@ public sealed class MNK(RotationModuleManager manager, Actor player) : Attackxan
                 prio = GCDPriority.MeditateForce;
                 break;
             case OffensiveStrategy.Automatic:
-                if (UptimeIn > MathF.Max(GCD + AttackGCDLength, FormShiftLeft) && UptimeIn < 25)
+                if (UptimeIn > Math.Max(GCD + AttackGCDLength, FormShiftLeft) && UptimeIn < 25)
                     prio = GCDPriority.Meditate;
                 break;
         }
@@ -680,7 +682,7 @@ public sealed class MNK(RotationModuleManager manager, Actor player) : Attackxan
         if (HaveTarget && Chakra >= 5 && Player.InCombat)
         {
             if (NumEnlightenmentTargets >= 3)
-                PushOGCD(AID.HowlingFist, EnlightenmentTarget, OGCDPriority.TFC);
+                PushOGCD(AID.HowlingFist, EnlightenmentTarget, OGCDPriority.TFC, setRotation: true);
 
             PushOGCD(AID.SteelPeak, primaryTarget, OGCDPriority.TFC, useOnDyingTarget: false);
         }
@@ -726,7 +728,7 @@ public sealed class MNK(RotationModuleManager manager, Actor player) : Attackxan
             return;
 
         // forced usage
-        if (pbstrat == PBStrategy.Force || pbstrat is PBStrategy.DowntimeSolar or PBStrategy.DowntimeLunar && primaryTarget == null)
+        if (pbstrat == PBStrategy.Force || pbstrat is PBStrategy.DowntimeSolar or PBStrategy.DowntimeLunar && primaryTarget == null || pbstrat == PBStrategy.ForceNoShift && FormShiftLeft == 0)
         {
             use();
             return;
@@ -775,7 +777,7 @@ public sealed class MNK(RotationModuleManager manager, Actor player) : Attackxan
 
     private void UseRoF(in Strategy strategy)
     {
-        var earliestRof = MathF.Max(AnimationLockDelay + 0.8f, 20.6f - GCDLength * 10);
+        var earliestRof = Math.Max(AnimationLockDelay + 0.8f, 20.6f - GCDLength * 10);
 
         switch (strategy.RoF.Value)
         {

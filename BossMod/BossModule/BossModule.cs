@@ -26,6 +26,10 @@ public abstract class BossModule : IDisposable
     public WPos Center => Arena.Center;
     public ArenaBounds Bounds => Arena.Bounds;
 
+    // Optional notes shown in a separate window while this encounter is loaded but not yet pulled.
+    // Override this in an encounter module to opt in; each entry is rendered as a separate bullet.
+    public virtual string[] PrePullHints => [];
+
     // per-oid enemy lists; filled on first request
     public readonly Dictionary<uint, List<Actor>> RelevantEnemies = []; // key = actor OID
 
@@ -234,6 +238,11 @@ public abstract class BossModule : IDisposable
 
     public void Update()
     {
+        if (StateMachine.ActiveState == null)
+        {
+            UpdatePreModuleActivation();
+        }
+
         if (StateMachine.ActivePhaseIndex < 0 && CheckPull())
         {
             StateMachine.Start(WorldState.CurrentTime);
@@ -242,10 +251,7 @@ public abstract class BossModule : IDisposable
         if (StateMachine.ActiveState != null)
         {
             StateMachine.Update(WorldState.CurrentTime);
-        }
 
-        if (StateMachine.ActiveState != null)
-        {
             UpdateModule();
             var count = Components.Count;
             for (var i = 0; i < count; ++i)
@@ -376,7 +382,7 @@ public abstract class BossModule : IDisposable
     // Resolves an actor's current authored arena floor independently of world-projection settings.
     // Disjoint layers select by X/Z containment; overlapping floors use Y plus per-actor hysteresis
     // to prevent jumps near a midpoint from flickering hints, AI restrictions and pathfinding maps.
-    public int? ResolveArenaProjectionLayer(Actor actor)
+    public virtual int? ResolveArenaProjectionLayer(Actor actor)
     {
         if (Bounds is not ArenaBoundsCustom { WorldProjectionLayers.Length: > 0 } custom)
         {
@@ -512,6 +518,7 @@ public abstract class BossModule : IDisposable
     public virtual bool ShouldPrioritizeAllEnemies => false;
 
     protected virtual void UpdateModule() { }
+    protected virtual void UpdatePreModuleActivation() { }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal Actor? GetActor(uint enemy)

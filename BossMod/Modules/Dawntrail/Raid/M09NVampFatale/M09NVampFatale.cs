@@ -42,7 +42,7 @@ sealed class NeckBiter(BossModule module) : Components.Voidzone(module, 3f, GetN
         var count = enemies.Count;
         var index = 0;
         var neckbiters = new Actor[count];
-        for (var i = 0; i < count; i++)
+        for (var i = 0; i < count; ++i)
         {
             var z = enemies[i];
             if (z.EventState != 7)
@@ -63,7 +63,7 @@ sealed class CoffinMaker(BossModule module) : Components.Voidzone(module, 3f, Ge
         var count = enemies.Count;
         var index = 0;
         var coffinmakers = new Actor[count];
-        for (var i = 0; i < count; i++)
+        for (var i = 0; i < count; ++i)
         {
             var z = enemies[i];
             if (z.EventState != 7)
@@ -76,5 +76,4 @@ sealed class CoffinMaker(BossModule module) : Components.Voidzone(module, 3f, Ge
 }
 
 [ModuleInfo(BossModuleInfo.Maturity.Contributed, PrimaryActorOID = (uint)OID.VampFatale, Contributors = "HerStolenLight", GroupType = BossModuleInfo.GroupType.CFC, GroupID = 1068u, NameID = 14300u)]
-[SkipLocalsInit]
 public sealed class M09NVampFatale(WorldState ws, Actor primary) : BossModule(ws, primary, new(100f, 100f), new ArenaBoundsSquare(20f));

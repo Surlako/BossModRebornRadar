@@ -15,23 +15,23 @@ public sealed class ClassWHMUtility(RotationModuleManager manager, Actor player)
         DefineShared(res, IDLimitBreak3);
 
         DefineSimpleConfig(res, Track.PresenceOfMind, "PresenceOfMind", "PoM", 220, WHM.AID.PresenceOfMind, 15);
-        DefineSimpleConfig(res, Track.Regen, "Regen", "", 110, WHM.AID.Regen, 18);
+        DefineSimpleConfig(res, Track.Regen, "Regen", "", 110, WHM.AID.Regen, 18, ActionQueue.Priority.VeryHigh);
 
         res.Define(Track.Cure).As<CureOption>("Cure", "", 100)
             .AddOption(CureOption.None, "Do not use automatically")
-            .AddOption(CureOption.Cure, "Use Cure", 2.5f, 0, ActionTargets.Self | ActionTargets.Party | ActionTargets.Alliance | ActionTargets.Friendly, 2)
-            .AddOption(CureOption.CureII, "Use Cure II", 2.5f, 0, ActionTargets.Self | ActionTargets.Party | ActionTargets.Alliance | ActionTargets.Friendly, 30)
-            .AddOption(CureOption.CureIII, "Use Cure III", 2.5f, 0, ActionTargets.Self | ActionTargets.Party, 40)
+            .AddOption(CureOption.Cure, "Use Cure", 2.5f, 0, ActionTargets.Self | ActionTargets.Party | ActionTargets.Alliance | ActionTargets.Friendly, 2, defaultPriority: ActionQueue.Priority.VeryHigh)
+            .AddOption(CureOption.CureII, "Use Cure II", 2.5f, 0, ActionTargets.Self | ActionTargets.Party | ActionTargets.Alliance | ActionTargets.Friendly, 30, defaultPriority: ActionQueue.Priority.VeryHigh)
+            .AddOption(CureOption.CureIII, "Use Cure III", 2.5f, 0, ActionTargets.Self | ActionTargets.Party, 40, defaultPriority: ActionQueue.Priority.VeryHigh)
             .AddAssociatedActions(WHM.AID.Cure, WHM.AID.CureII, WHM.AID.CureIII);
 
         res.Define(Track.Medica).As<MedicaOption>("Medica", "", 130)
             .AddOption(MedicaOption.None, "Do not use automatically")
-            .AddOption(MedicaOption.MedicaII, "Use Medica II", 2.5f, 15, ActionTargets.Self, 50, 95)
-            .AddOption(MedicaOption.MedicaIII, "Use Medica III", 2.5f, 15, ActionTargets.Self, 96)
+            .AddOption(MedicaOption.MedicaII, "Use Medica II", 2.5f, 15, ActionTargets.Self, 50, 95, defaultPriority: ActionQueue.Priority.VeryHigh)
+            .AddOption(MedicaOption.MedicaIII, "Use Medica III", 2.5f, 15, ActionTargets.Self, 96, defaultPriority: ActionQueue.Priority.VeryHigh)
             .AddAssociatedActions(WHM.AID.MedicaII, WHM.AID.MedicaIII);
 
-        DefineSimpleConfig(res, Track.AfflatusSolace, "AfflatusSolace", "Solace", 105, WHM.AID.AfflatusSolace);
-        DefineSimpleConfig(res, Track.AfflatusRapture, "AfflatusRapture", "Rapture", 125, WHM.AID.AfflatusRapture);
+        DefineSimpleConfig(res, Track.AfflatusSolace, "AfflatusSolace", "Solace", 105, WHM.AID.AfflatusSolace, defaultPriority: ActionQueue.Priority.VeryHigh);
+        DefineSimpleConfig(res, Track.AfflatusRapture, "AfflatusRapture", "Rapture", 125, WHM.AID.AfflatusRapture, defaultPriority: ActionQueue.Priority.VeryHigh);
         DefineSimpleConfig(res, Track.Benediction, "Benediction", "Bene", 300, WHM.AID.Benediction);
 
         res.Define(Track.Asylum).As<SimpleOption>("Asylum", "", 230)
@@ -68,13 +68,16 @@ public sealed class ClassWHMUtility(RotationModuleManager manager, Actor player)
         ExecuteSimple(strategy.Option(Track.AfflatusSolace), WHM.AID.AfflatusSolace, defaultHealTarget);
         ExecuteSimple(strategy.Option(Track.AfflatusRapture), WHM.AID.AfflatusRapture, Player);
         ExecuteSimple(strategy.Option(Track.Benediction), WHM.AID.Benediction, defaultHealTarget);
-        ExecuteSimple(strategy.Option(Track.ThinAir), WHM.AID.ThinAir, Player);
+        if (Player.FindStatus((uint)WHM.SID.ThinAir, DateTime.MaxValue) == null)
+            ExecuteSimple(strategy.Option(Track.ThinAir), WHM.AID.ThinAir, Player);
         ExecuteSimple(strategy.Option(Track.Tetragrammaton), WHM.AID.Tetragrammaton, defaultHealTarget);
         ExecuteSimple(strategy.Option(Track.DivineBenison), WHM.AID.DivineBenison, defaultHealTarget);
         ExecuteSimple(strategy.Option(Track.PlenaryIndulgence), WHM.AID.PlenaryIndulgence, Player);
         ExecuteSimple(strategy.Option(Track.Temperance), WHM.AID.Temperance, Player);
         ExecuteSimple(strategy.Option(Track.Aquaveil), WHM.AID.Aquaveil, defaultHealTarget);
         ExecuteSimple(strategy.Option(Track.AetherialShift), WHM.AID.AetherialShift, Player);
+
+        var swift = Player.FindStatus(ClassShared.SID.Swiftcast)?.ExpireAt > World.FutureTime(GCD);
 
         var cure = strategy.Option(Track.Cure);
         var cureAction = cure.As<CureOption>() switch
@@ -85,7 +88,7 @@ public sealed class ClassWHMUtility(RotationModuleManager manager, Actor player)
             _ => default
         };
         if (cureAction != default)
-            Hints.ActionsToExecute.Push(ActionID.MakeSpell(cureAction), ResolveTarget(cure.Value) ?? defaultHealTarget, cure.Priority(), cure.Value.ExpireIn, castTime: ActionDefinitions.Instance.Spell(cureAction)!.CastTime);
+            Hints.ActionsToExecute.Push(ActionID.MakeSpell(cureAction), ResolveTarget(cure.Value) ?? defaultHealTarget, cure.Priority(), cure.Value.ExpireIn, castTime: swift ? 0 : ActionDefinitions.Instance.Spell(cureAction)!.CastTime);
 
         var regen = strategy.Option(Track.Regen);
         if (regen.As<SimpleOption>() == SimpleOption.Use)
@@ -106,7 +109,7 @@ public sealed class ClassWHMUtility(RotationModuleManager manager, Actor player)
         {
             var medicaHotUp = StatusDetails(Player, WHM.SID.MedicaII, Player.InstanceID).Left > 0.1f || StatusDetails(Player, WHM.SID.MedicaIII, Player.InstanceID).Left > 0.1f;
             if (!medicaHotUp)
-                Hints.ActionsToExecute.Push(ActionID.MakeSpell(medicaAction), Player, medica.Priority(), medica.Value.ExpireIn, castTime: 2f);
+                Hints.ActionsToExecute.Push(ActionID.MakeSpell(medicaAction), Player, medica.Priority(), medica.Value.ExpireIn, castTime: swift ? 0 : 2);
         }
 
         var asylum = strategy.Option(Track.Asylum);
@@ -126,7 +129,7 @@ public sealed class ClassWHMUtility(RotationModuleManager manager, Actor player)
             _ => default
         };
         var hasLiturgy = Player.FindStatus(WHM.SID.LiturgyOfTheBell) != null;
-        if (liturgyAction != default && ((liturgyStrat == LiturgyOption.Use && !hasLiturgy) || (liturgyStrat == LiturgyOption.End && hasLiturgy)))
+        if (liturgyAction != default && (liturgyStrat == LiturgyOption.Use && !hasLiturgy || liturgyStrat == LiturgyOption.End && hasLiturgy))
         {
             if (liturgyStrat == LiturgyOption.Use)
                 Hints.ActionsToExecute.Push(ActionID.MakeSpell(liturgyAction), null, liturgy.Priority(), liturgy.Value.ExpireIn, targetPos: ResolveTargetLocation(liturgy.Value).ToVec3(Player.PosRot.Y));

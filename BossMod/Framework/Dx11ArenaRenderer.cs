@@ -368,6 +368,29 @@ public static unsafe partial class Dx11ArenaRenderer
             return new(center, projectionHeight, min, max, aRel, bRel, new Vector4(cRel.X, cRel.Y, 0f, 0f), default, color, WorldProjectedShapeKind.Triangle, outlineWidth, waveOriginXZ: aXZ);
         }
 
+        // Dedicated actor marker primitive. PosRot is kept intact until this point so its real world Y
+        // becomes the terrain-projection origin; W supplies facing while X/Z supply the footprint center.
+        // This lets actor markers use a much smaller receiver/bounds height than generic arena-projected
+        // triangles without losing grounded actors on floors whose authored reference Y differs locally.
+        public static WorldProjectedShapeInstance ActorTriangle(Vector4 posRot, float scale, uint fillColor, uint outlineColor, float projectionHeight, float outlineWidth)
+        {
+            scale = Math.Max(0f, scale);
+            var (sin, cos) = MathF.SinCos(posRot.W);
+            var directionXZ = new Vector2(sin, cos);
+            var orthoR = new Vector2(-cos, sin);
+            var centerXZ = new Vector2(posRot.X, posRot.Z);
+            var aXZ = centerXZ + directionXZ * (scale * 0.7f);
+            var backXZ = centerXZ - directionXZ * (scale * 0.35f);
+            var sideXZ = orthoR * (scale * 0.433f);
+            var bXZ = backXZ + sideXZ;
+            var cXZ = backXZ - sideXZ;
+            var min = Vector2.Min(aXZ, Vector2.Min(bXZ, cXZ));
+            var max = Vector2.Max(aXZ, Vector2.Max(bXZ, cXZ));
+            var height = Math.Max(0f, projectionHeight);
+            return new(new Vector3(posRot.X, posRot.Y, posRot.Z), height, min, max, aXZ - centerXZ, bXZ - centerXZ,
+                new Vector4(cXZ.X - centerXZ.X, cXZ.Y - centerXZ.Y, 0f, 0f), new Vector4(height, 0f, 0f, 0f), fillColor, WorldProjectedShapeKind.Triangle, outlineWidth, outlineColor, fillWithOutline: true, suppressZoneWave: true);
+        }
+
         // One projected triangle instance containing both fill and outline. This is primarily used by
         // actor markers so scene-depth reconstruction, character classification and arena clipping are evaluated once
         public static WorldProjectedShapeInstance TriangleFilledOutlined(Vector3 a, Vector3 b, Vector3 c, uint fillColor, uint outlineColor, float projectionHeight, float outlineWidth, float boundsProjectionHeight = 0f)
@@ -1882,7 +1905,7 @@ public static unsafe partial class Dx11ArenaRenderer
 
             var miter = sum * (1f / MathF.Sqrt(sumLenSq));
             var denom = Vector2.Dot(miter, nextNormal);
-            if (MathF.Abs(denom) < 0.2f)
+            if (Math.Abs(denom) < 0.2f)
             {
                 denom = MathF.CopySign(0.2f, denom == 0f ? 1f : denom);
             }
@@ -2321,7 +2344,7 @@ public static unsafe partial class Dx11ArenaRenderer
         }
 
         EnsureBuildRunStarted();
-        var pixelScale = MathF.Max(_buildPixelScale, 1e-5f);
+        var pixelScale = Math.Max(_buildPixelScale, 1e-5f);
         var radius = (halfWidth * halfWidth + halfHeight * halfHeight) / (2f * halfHeight);
         var offset = radius - halfHeight;
         var aaPadScreen = 1.5f / pixelScale;
@@ -2728,7 +2751,7 @@ public static unsafe partial class Dx11ArenaRenderer
         var orbitcenterX = toOrbitCenter.X;
         var orbitcenterZ = toOrbitCenter.Z;
         var orbitRadiusSq = orbitcenterX * orbitcenterX + orbitcenterZ * orbitcenterZ;
-        if (!(orbitRadiusSq > 1e-12f) || MathF.Abs(angularLengthRadians) < 1e-6f)
+        if (!(orbitRadiusSq > 1e-12f) || Math.Abs(angularLengthRadians) < 1e-6f)
         {
             AppendCircleOutline(startOffset, radius, color, lineThickness, shadowColor, shadowThickness);
             return;
@@ -4820,7 +4843,7 @@ public static unsafe partial class Dx11ArenaRenderer
         var viewportPosY = _buildViewportPos.Y;
         _buildNdcOffset = new(-1f - viewportPosX * _buildNdcScale.X, 1f - viewportPosY * _buildNdcScale.Y);
         _buildCenterNdc = new(_buildCenterX * _buildNdcScale.X + _buildNdcOffset.X, _buildCenterY * _buildNdcScale.Y + _buildNdcOffset.Y);
-        _buildExtentNdcScale = new(MathF.Abs(_buildNdcScale.X), MathF.Abs(_buildNdcScale.Y));
+        _buildExtentNdcScale = new(Math.Abs(_buildNdcScale.X), Math.Abs(_buildNdcScale.Y));
         _buildLocalToNdc = new(_buildScaledCos * _buildNdcScale.X, -_buildScaledSin * _buildNdcScale.X, _buildScaledSin * _buildNdcScale.Y, _buildScaledCos * _buildNdcScale.Y);
 
         _buildClipOffset = _buildViewportPos;

@@ -134,7 +134,7 @@ sealed class HellwardBound(BossModule module) : Components.GenericAOEs(module)
         var max = count > 2 ? 2 : count;
         var nextAOEs = CollectionsMarshal.AsSpan(aoes);
 
-        for (var i = 0; i < max; i++)
+        for (var i = 0; i < max; ++i)
         {
             ref var aoe = ref nextAOEs[i];
             aoe.Color = i == 0 ? Colors.Danger : Colors.AOE;
@@ -179,7 +179,7 @@ sealed class HellwardBound(BossModule module) : Components.GenericAOEs(module)
         }
 
         // Setup the aoes
-        for (var i = 0; i < pathList.Count; i++)
+        for (var i = 0; i < pathList.Count; ++i)
         {
             if (i == 0)
             {
@@ -234,7 +234,7 @@ sealed class HellishBreath(BossModule module) : Components.GenericAOEs(module)
         var max = count > 2 ? 2 : count;
         var nextAOEs = CollectionsMarshal.AsSpan(aoes);
 
-        for (var i = 0; i < max; i++)
+        for (var i = 0; i < max; ++i)
         {
             ref var aoe = ref nextAOEs[i];
             aoe.Color = i == 0 ? Colors.Danger : Colors.AOE;
@@ -292,7 +292,7 @@ sealed class ShapeshiftingSupercellRings(BossModule module) : Components.Generic
         var max = count > 2 ? 2 : count;
         var aoes = CollectionsMarshal.AsSpan(Casters);
 
-        for (var i = 0; i < max; i++)
+        for (var i = 0; i < max; ++i)
         {
             ref var aoe = ref aoes[i];
             aoe.Color = i == 0 ? Colors.Danger : Colors.AOE;
@@ -347,7 +347,7 @@ sealed class ShapeshiftingSupercell : Components.GenericRotatingAOE
     {
         if (rotations.Count == 3 && increment != default)
         {
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < 3; ++i)
             {
                 var spell = rotations[i];
                 Sequences.Add(new(shape, spell.LocXZ, spell.Rotation, increment, Module.CastFinishAt(spell), 2.5f, 6, 1));
@@ -359,7 +359,6 @@ sealed class ShapeshiftingSupercell : Components.GenericRotatingAOE
     }
 }
 
-[SkipLocalsInit]
 sealed class CE202AcceptNoImitatorsStates : StateMachineBuilder
 {
     public CE202AcceptNoImitatorsStates(BossModule module) : base(module)
@@ -381,7 +380,6 @@ sealed class CE202AcceptNoImitatorsStates : StateMachineBuilder
 }
 
 [ModuleInfo(BossModuleInfo.Maturity.Verified, PrimaryActorOID = (uint)OID.Metamorph, Contributors = "Equilius", GroupType = BossModuleInfo.GroupType.CriticalEngagement, GroupID = 1093u, NameID = 63u)]
-[SkipLocalsInit]
 public sealed class CE202AcceptNoImitators(WorldState ws, Actor primary) : BossModule(ws, primary, new(500f, -310f), new ArenaBoundsCircle(25f))
 {
     protected override bool CheckPull() => base.CheckPull() && Raid.Player()!.Position.InCircle(Arena.Center, 25f);

@@ -9,8 +9,8 @@
    - `BossMod/Framework/PassiveActionObserver.cs`
    - `BossMod/Framework/WorldStateGameSync.cs`
    - IPC, AI, autorotation, movement, and action-manager code
-4. Merge the pull request.
-5. Create a four-part numeric tag matching the chosen release version, for example `7.5.5.71`.
+4. Set `release-version.txt` to the chosen four-part numeric version in the pull request, then merge it. A change to this file on `main` starts the release workflow.
+5. Alternatively, create a four-part numeric tag or run **Publish** manually with the version. Use only one release method for a given version.
 6. Confirm the **Publish** workflow creates `latest.zip` and updates `pluginmaster.json`.
 
 ## Merge conflicts

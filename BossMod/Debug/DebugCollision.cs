@@ -393,12 +393,12 @@ public static unsafe class CollisionOutlinesExtractor
             sb.Append("    new[] { ");
             var poly = polys[i];
             var countH = poly.Holes.Count;
-            for (var h = 0; h < countH; ++h)
+            for (var h = 0; h < countH; h++)
             {
                 var hole = poly.Holes[h];
                 sb.Append("new[] { ");
                 var countH2 = hole.Count;
-                for (var j = 0; j < countH2; j++)
+                for (var j = 0; j < countH2; ++j)
                 {
                     sb.Append(V(hole[j]));
                     if (j + 1 < hole.Count)
@@ -1005,7 +1005,7 @@ public sealed unsafe class DebugCollision() : IDisposable
                     var dx = p.X - cast->Translation.X;
                     var dz = p.Y - cast->Translation.Z;
                     // Equivalent to distance-to-sphere-surface <= filter distance, but avoids sqrt.
-                    var expandedRadius = _maxColliderDistanceXZ + MathF.Abs(cast->Scale.X);
+                    var expandedRadius = _maxColliderDistanceXZ + Math.Abs(cast->Scale.X);
                     return dx * dx + dz * dz <= expandedRadius * expandedRadius;
                 }
             case ColliderType.Plane:

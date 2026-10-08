@@ -157,7 +157,7 @@ sealed class SoulAndBody(BossModule module) : Components.SimpleAOEs(module, (uin
              */
             var _genAOE = 26;
 
-            for (var i = 0; i < _genAOE; i++)
+            for (var i = 0; i < _genAOE; ++i)
             {
                 var rotAngFloat = 8f * i;
                 WPos futureOrigin = WPos.RotateAroundOrigin(-rotAngFloat, Arena.Center, spell.LocXZ);
@@ -223,7 +223,6 @@ sealed class BeatificVision(BossModule module)
 
 sealed class DropOfLight(BossModule module) : Components.BaitAwayIcon(module, new AOEShapeCircle(10f), (uint)IconID.DropOfLightTarget, (uint)AID.DropOfLight1, centerAtTarget: true);
 
-[SkipLocalsInit]
 sealed class InnocenceStates : StateMachineBuilder
 {
     public InnocenceStates(BossModule module) : base(module)
@@ -274,7 +273,6 @@ sealed class InnocenceStates : StateMachineBuilder
     NameID = 8353u,
     SortOrder = 1,
     PlanLevel = 0)]
-[SkipLocalsInit]
 
 /*
  * The first stage of innocence is the fat innocence.  Phase 1 ends when that model
